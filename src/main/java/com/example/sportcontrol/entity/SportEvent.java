@@ -12,10 +12,10 @@ import lombok.*;
 public class SportEvent {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
-
+    private Long id;
     private String name;
     private String location;
+
     @Column(name = "date")
     private LocalDateTime date;
 }

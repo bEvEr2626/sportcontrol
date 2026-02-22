@@ -3,11 +3,8 @@ package com.example.sportcontrol.controller;
 import java.util.*;
 import com.example.sportcontrol.dto.EventDto;
 import com.example.sportcontrol.service.EventService;
-
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/events")
@@ -19,5 +16,19 @@ public class EventController {
     public List<EventDto> getAll() {
         return eventService.getAllEvents();
     }
+
+    @PostMapping
+    public EventDto create(@RequestBody EventDto dto) {
+        return eventService.createEvent(dto);
+    }
     
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        eventService.deleteEvent(id);
+    }
+
+    @GetMapping("/search")
+    public List<EventDto> searchByLocation(@RequestParam String location) {
+        return eventService.getEventsByLocation(location);
+    }
 }
