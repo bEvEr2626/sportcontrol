@@ -2,29 +2,27 @@ package com.example.sportcontrol.mapper;
 
 import com.example.sportcontrol.dto.EventDto;
 import com.example.sportcontrol.entity.SportEvent;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
-@Component
-public class EventMapper {
+/**
+ * Mapper for converting between Event entities and DTOs.
+ */
+@Mapper(componentModel = "spring")
+public interface EventMapper {
 
-    public EventDto toDto(SportEvent entity) {
-        if (entity == null) return null;
+    /**
+     * Converts entity to DTO.
+     * @param entity the sport event entity.
+     * @return the event DTO.
+     */
+    EventDto toDto(SportEvent entity);
 
-        EventDto dto = new EventDto();
-        dto.setId(entity.getId());
-        dto.setName(entity.getName());
-        dto.setLocation(entity.getLocation());
-        dto.setDate(entity.getDate());
-        return dto;
-    }
-
-    public SportEvent toEntity(EventDto dto) {
-        if (dto == null) return null;
-
-        SportEvent entity = new SportEvent();
-        entity.setName(dto.getName());
-        entity.setLocation(dto.getLocation());
-        entity.setDate(dto.getDate());
-        return entity;
-    }
+    /**
+     * Converts DTO to entity, ignoring the ID field.
+     * @param dto the event DTO.
+     * @return the sport event entity.
+     */
+    @Mapping(target = "id", ignore = true)
+    SportEvent toEntity(EventDto dto);
 }
