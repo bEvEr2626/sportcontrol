@@ -8,6 +8,7 @@ target/
 *.iml
 application-*.properties
 application-*.yml
+.env
 
 ### STS ###
 .apt_generated
