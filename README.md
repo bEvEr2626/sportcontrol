@@ -14,3 +14,5 @@ The application is built to handle the complexities of event coordination by off
 * **Full Event Lifecycle:** Complete control over adding new events and removing outdated ones.
 * **Location-Based Search:** Optimized query processing to find matches based on location parameters.
 * **Modern Architecture:** Built on Spring Boot 3, leveraging the latest features of Java for high performance and reliability.
+
+ https://sonarcloud.io/summary/overall?id=bEvEr2626_sportcontrol&branch=main
