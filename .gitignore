@@ -38,4 +38,4 @@ build/
 .vscode/
 
 ### Checkstyle ###
-*.checkstyle.xml
+checkstyle.xml
