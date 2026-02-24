@@ -11,9 +11,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/**
- * Entity representing a sport event.
- */
 @Entity
 @Table(name = "events")
 @Getter
@@ -21,18 +18,14 @@ import lombok.Setter;
 @NoArgsConstructor
 public class SportEvent {
 
-    /** Primary key. */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** Name of the event. */
     private String name;
 
-    /** Location where the event takes place. */
     private String location;
 
-    /** Date and time of the event. */
     @Column(name = "date")
     private LocalDateTime date;
 }
