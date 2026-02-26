@@ -35,6 +35,12 @@ public class EventController {
         eventService.deleteEvent(id);
     }
 
+    @GetMapping("/{id}")
+    public EventDto searchById(@PathVariable final Long id) {
+        return eventService.getById(id);
+    }
+    
+
     @GetMapping("/search")
     public List<EventDto> searchByLocation(
             @RequestParam final String location) {

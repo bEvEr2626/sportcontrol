@@ -32,6 +32,12 @@ public class EventService {
         eventRepository.deleteById(id);
     }
 
+    public final EventDto getById(final Long id) {
+        return eventRepository.findById(id)
+                .map(eventMapper::toDto)
+                .orElse(null);
+    }
+
     public final List<EventDto> getEventsByLocation(final String location) {
         return eventRepository.findByLocation(location)
                 .stream()
