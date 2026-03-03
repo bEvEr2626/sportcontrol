@@ -12,34 +12,34 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class MatchService {
 
-    private final MatchRepository eventRepository;
+    private final MatchRepository matchRepository;
 
     private final MatchMapper matchMapper;
 
-    public final List<MatchDto> getAllEvents() {
-        return eventRepository.findAll().stream()
+    public final List<MatchDto> getAllMatches() {
+        return matchRepository.findAll().stream()
                 .map(matchMapper::toDto)
                 .toList();
     }
 
-    public final MatchDto createEvent(final MatchDto dto) {
+    public final MatchDto createMatch(final MatchDto dto) {
         Match entity = matchMapper.toEntity(dto);
-        Match savedEntity = eventRepository.save(entity);
+        Match savedEntity = matchRepository.save(entity);
         return matchMapper.toDto(savedEntity);
     }
 
-    public final void deleteEvent(final Long id) {
-        eventRepository.deleteById(id);
+    public final void deleteMatch(final Long id) {
+        matchRepository.deleteById(id);
     }
 
     public final MatchDto getById(final Long id) {
-        return eventRepository.findById(id)
+        return matchRepository.findById(id)
                 .map(matchMapper::toDto)
                 .orElse(null);
     }
 
-    public final List<MatchDto> getEventsByLocation(final String location) {
-        return eventRepository.findByLocation(location)
+    public final List<MatchDto> getMatchesByLocation(final String location) {
+        return matchRepository.findByLocation(location)
                 .stream()
                 .map(matchMapper::toDto)
                 .toList();

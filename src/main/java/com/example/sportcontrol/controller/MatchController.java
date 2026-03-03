@@ -22,17 +22,17 @@ public class MatchController {
 
     @GetMapping
     public List<MatchDto> getAll() {
-        return eventService.getAllEvents();
+        return eventService.getAllMatches();
     }
 
     @PostMapping
     public MatchDto create(@RequestBody final MatchDto dto) {
-        return eventService.createEvent(dto);
+        return eventService.createMatch(dto);
     }
 
     @DeleteMapping("/{id}")
     public void delete(@PathVariable final Long id) {
-        eventService.deleteEvent(id);
+        eventService.deleteMatch(id);
     }
 
     @GetMapping("/{id}")
@@ -44,6 +44,6 @@ public class MatchController {
     @GetMapping("/search")
     public List<MatchDto> searchByLocation(
             @RequestParam final String location) {
-        return eventService.getEventsByLocation(location);
+        return eventService.getMatchesByLocation(location);
     }
 }
