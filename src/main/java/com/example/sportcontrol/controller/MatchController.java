@@ -14,36 +14,36 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/events")
+@RequestMapping("/matches")
 @RequiredArgsConstructor
 public class MatchController {
 
-    private final MatchService eventService;
+    private final MatchService matchService;
 
     @GetMapping
     public List<MatchDto> getAll() {
-        return eventService.getAllMatches();
+        return matchService.getAllMatches();
     }
 
     @PostMapping
     public MatchDto create(@RequestBody final MatchDto dto) {
-        return eventService.createMatch(dto);
+        return matchService.createMatch(dto);
     }
 
     @DeleteMapping("/{id}")
     public void delete(@PathVariable final Long id) {
-        eventService.deleteMatch(id);
+        matchService.deleteMatch(id);
     }
 
     @GetMapping("/{id}")
     public MatchDto searchById(@PathVariable final Long id) {
-        return eventService.getById(id);
+        return matchService.getById(id);
     }
     
 
     @GetMapping("/search")
     public List<MatchDto> searchByLocation(
             @RequestParam final String location) {
-        return eventService.getMatchesByLocation(location);
+        return matchService.getMatchesByLocation(location);
     }
 }

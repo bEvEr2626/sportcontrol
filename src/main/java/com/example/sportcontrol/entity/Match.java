@@ -5,6 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.Getter;
@@ -12,7 +14,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "events")
+@Table(name = "matches")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -26,6 +28,14 @@ public class Match {
 
     private String location;
 
-    @Column(name = "date")
+    @Column(name = "match_date")
     private LocalDateTime date;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "sport_id", nullable = false)
+    private Sport sport;
+
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "tournament_id", nullable = true)
+    private Tournament tournament;
 }

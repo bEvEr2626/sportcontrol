@@ -17,4 +17,8 @@ public class MatchDto {
     private String location;
 
     private LocalDateTime date;
+
+    private Long sportId;
+
+    private Long tournamentId;
 }
