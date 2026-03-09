@@ -18,7 +18,15 @@ public class MatchDto {
 
     private LocalDateTime date;
 
-    private Long sportId;
-
     private Long tournamentId;
+
+    private String tournamentName;
+
+    private Long homeTeamId;
+
+    private String homeTeamName;
+
+    private Long awayTeamId;
+
+    private String awayTeamName;
 }

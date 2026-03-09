@@ -11,5 +11,6 @@ public interface SportMapper {
     SportDto toDto(Sport entity);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "tournaments", ignore = true)
     Sport toEntity(SportDto dto);
 }

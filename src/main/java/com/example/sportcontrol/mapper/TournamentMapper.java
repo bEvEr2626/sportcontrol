@@ -13,5 +13,7 @@ public interface TournamentMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "sport", ignore = true)
+    @Mapping(target = "matches", ignore = true)
+    @Mapping(target = "teams", ignore = true)
     Tournament toEntity(TournamentDto dto);    
 }
