@@ -30,15 +30,15 @@ public class TournamentBatchService {
 
     public void createTournamentWithMatches(TournamentWithMatchesDto dto) {
         Tournament tournament = saveTournamentWithMatches(dto);
-        LOG.info("Tournament '{}' with {} matches saved (no @Transactional)",
-                tournament.getName(), dto.getMatches().size());
+        LOG.info("Tournament id={} with {} matches saved (no @Transactional)",
+                tournament.getId(), dto.getMatches().size());
     }
     
     @Transactional
     public void createTournamentWithMatchesTransactional(TournamentWithMatchesDto dto) {
         Tournament tournament = saveTournamentWithMatches(dto);
-        LOG.info("Tournament '{}' with {} matches saved (@Transactional)",
-                tournament.getName(), dto.getMatches().size());
+        LOG.info("Tournament id={} with {} matches saved (@Transactional)",
+                tournament.getId(), dto.getMatches().size());
     }
 
     private Tournament saveTournamentWithMatches(TournamentWithMatchesDto dto) {
