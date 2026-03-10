@@ -3,6 +3,7 @@ package com.example.sportcontrol.controller;
 import com.example.sportcontrol.dto.TournamentWithMatchesDto;
 import com.example.sportcontrol.exception.EntityNotFoundException;
 import com.example.sportcontrol.service.TournamentBatchService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,7 +19,7 @@ public class TournamentBatchController {
 
     @PostMapping("/without-tx")
     public String withoutTransactional(
-            @RequestBody TournamentWithMatchesDto dto) {
+            @Valid @RequestBody TournamentWithMatchesDto dto) {
         try {
             batchService.createTournamentWithMatches(dto);
             return "OK: tournament and all matches saved";
@@ -29,7 +30,7 @@ public class TournamentBatchController {
 
     @PostMapping("/with-tx")
     public String withTransactional(
-            @RequestBody TournamentWithMatchesDto dto) {
+            @Valid @RequestBody TournamentWithMatchesDto dto) {
         try {
             batchService.createTournamentWithMatchesTransactional(dto);
             return "OK: tournament and all matches saved";

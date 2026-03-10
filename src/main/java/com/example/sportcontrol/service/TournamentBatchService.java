@@ -28,22 +28,12 @@ public class TournamentBatchService {
     private final MatchRepository matchRepository;
     private final TeamRepository teamRepository;
 
-    /**
-     * Без @Transactional: каждый save() — отдельная транзакция.
-     * Если при создании одного из матчей передан несуществующий teamId,
-     * турнир и предыдущие матчи уже сохранены — частичные данные остаются в БД.
-     */
     public void createTournamentWithMatches(TournamentWithMatchesDto dto) {
         Tournament tournament = saveTournamentWithMatches(dto);
         LOG.info("Tournament '{}' with {} matches saved (no @Transactional)",
                 tournament.getName(), dto.getMatches().size());
     }
-
-    /**
-     * С @Transactional: все save() в одной транзакции.
-     * Если при создании одного из матчей передан несуществующий teamId,
-     * всё откатывается — ни турнир, ни матчи не сохранятся.
-     */
+    
     @Transactional
     public void createTournamentWithMatchesTransactional(TournamentWithMatchesDto dto) {
         Tournament tournament = saveTournamentWithMatches(dto);
