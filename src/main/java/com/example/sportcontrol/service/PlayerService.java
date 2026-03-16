@@ -10,7 +10,8 @@ import com.example.sportcontrol.repository.PlayerRepository;
 import com.example.sportcontrol.repository.TeamRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -22,17 +23,10 @@ public class PlayerService {
     private final PlayerRepository playerRepository;
     private final PlayerMapper playerMapper;
 
-    public List<PlayerDto> getAllPlayers() {
-        return playerRepository.findAllBy().stream()
-                .map(playerMapper::toDto)
-                .toList();
-    }
-
     @Transactional(readOnly = true)
-    public List<PlayerDto> getAllPlayersNPlusOne() {
-        return playerRepository.findAll().stream()
-                .map(playerMapper::toDto)
-                .toList();
+    public Page<PlayerDto> getAllPlayers(Pageable pageable) {
+        return playerRepository.findAllBy(pageable)
+                .map(playerMapper::toDto);
     }
 
     public PlayerDto getById(Long id) {
