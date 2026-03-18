@@ -15,12 +15,21 @@ public class TournamentBatchController {
     private final TournamentBatchService batchService;
 
     @PostMapping
-    public String createTournamentWithMatches(@Valid @RequestBody TournamentWithMatchesDto dto) {
-        try {
-            Tournament tournament = batchService.createTournamentWithMatches(dto);
-            return "OK: tournament id=" + tournament.getId() + " and all matches saved";
-        } catch (Exception ex) {
-            return "ERROR: " + ex.getMessage();
-        }
+public ResponseEntity<ApiResponse<Long>> createTournamentWithMatches(
+        @Valid @RequestBody TournamentWithMatchesDto dto) {
+    try {
+        Tournament tournament = batchService.createTournamentWithMatches(dto);
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, tournament.getId(), "Tournament and matches saved")
+        );
+    } catch (EntityNotFoundException ex) {
+        LOG.warn("Entity not found during tournament creation", ex);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ApiResponse<>(false, null, "Referenced entity not found"));
+    } catch (Exception ex) {
+        LOG.error("Unexpected error during tournament creation", ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponse<>(false, null, "Unexpected error occurred"));
     }
+}
 }

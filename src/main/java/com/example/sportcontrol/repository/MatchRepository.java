@@ -46,35 +46,37 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
 
     @Query(
         value = """
-            SELECT m.* FROM matches m
-            JOIN teams ht ON ht.id = m.home_team_id
-            JOIN teams at ON at.id = m.away_team_id
-            JOIN tournaments t ON t.id = m.tournament_id
-            WHERE (:#{#filter.name} IS NULL OR m.name = :#{#filter.name})
-              AND (:#{#filter.location} IS NULL OR m.location = :#{#filter.location})
-              AND (:#{#filter.tournamentId} IS NULL OR t.id = :#{#filter.tournamentId})
-              AND (:#{#filter.homeTeamName} IS NULL OR ht.name = :#{#filter.homeTeamName})
-              AND (:#{#filter.awayTeamName} IS NULL OR at.name = :#{#filter.awayTeamName})
-              AND (:#{#filter.dateFrom} IS NULL OR m.match_date >= :#{#filter.dateFrom})
-              AND (:#{#filter.dateTo} IS NULL OR m.match_date <= :#{#filter.dateTo})
+        SELECT m.*
+        FROM matches m
+        JOIN teams ht ON ht.id = m.home_team_id
+        JOIN teams at ON at.id = m.away_team_id
+        JOIN tournaments t ON t.id = m.tournament_id
+        WHERE m.name = COALESCE(:#{#filter.name}, m.name)
+          AND m.location = COALESCE(:#{#filter.location}, m.location)
+          AND t.id = COALESCE(:#{#filter.tournamentId}, t.id)
+          AND ht.name = COALESCE(:#{#filter.homeTeamName}, ht.name)
+          AND at.name = COALESCE(:#{#filter.awayTeamName}, at.name)
+          AND m.match_date >= COALESCE(:#{#filter.dateFrom}, m.match_date)
+          AND m.match_date <= COALESCE(:#{#filter.dateTo}, m.match_date)
         """,
         countQuery = """
-            SELECT count(*) FROM matches m
-            JOIN teams ht ON ht.id = m.home_team_id
-            JOIN teams at ON at.id = m.away_team_id
-            JOIN tournaments t ON t.id = m.tournament_id
-            WHERE (:#{#filter.name} IS NULL OR m.name = :#{#filter.name})
-              AND (:#{#filter.location} IS NULL OR m.location = :#{#filter.location})
-              AND (:#{#filter.tournamentId} IS NULL OR t.id = :#{#filter.tournamentId})
-              AND (:#{#filter.homeTeamName} IS NULL OR ht.name = :#{#filter.homeTeamName})
-              AND (:#{#filter.awayTeamName} IS NULL OR at.name = :#{#filter.awayTeamName})
-              AND (:#{#filter.dateFrom} IS NULL OR m.match_date >= :#{#filter.dateFrom})
-              AND (:#{#filter.dateTo} IS NULL OR m.match_date <= :#{#filter.dateTo})
+        SELECT count(*)
+        FROM matches m
+        JOIN teams ht ON ht.id = m.home_team_id
+        JOIN teams at ON at.id = m.away_team_id
+        JOIN tournaments t ON t.id = m.tournament_id
+        WHERE m.name = COALESCE(:#{#filter.name}, m.name)
+          AND m.location = COALESCE(:#{#filter.location}, m.location)
+          AND t.id = COALESCE(:#{#filter.tournamentId}, t.id)
+          AND ht.name = COALESCE(:#{#filter.homeTeamName}, ht.name)
+          AND at.name = COALESCE(:#{#filter.awayTeamName}, at.name)
+          AND m.match_date >= COALESCE(:#{#filter.dateFrom}, m.match_date)
+          AND m.match_date <= COALESCE(:#{#filter.dateTo}, m.match_date)
         """,
         nativeQuery = true
     )
     Page<Match> findWithFiltersNative(
         @Param("filter") MatchFilter filter,
         Pageable pageable
-    );
+);
 }
