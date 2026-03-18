@@ -38,7 +38,7 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
           AND (:#{#filter.awayTeamName} IS NULL OR at.name = :#{#filter.awayTeamName})
           AND (:#{#filter.dateFrom} IS NULL OR m.date >= :#{#filter.dateFrom})
           AND (:#{#filter.dateTo} IS NULL OR m.date <= :#{#filter.dateTo})
-    """)
+        """)
     Page<Match> findWithFilters(
         @Param("filter") MatchFilter filter,
         Pageable pageable

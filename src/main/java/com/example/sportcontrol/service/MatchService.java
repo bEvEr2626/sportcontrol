@@ -125,66 +125,17 @@ public class MatchService {
 
     @Transactional(readOnly = true)
     public Page<MatchDto> findMatches(MatchFilter filter, int page, int size) {
-        MatchSearchKey key = new MatchSearchKey(
-                filter.getName(),
-                filter.getLocation(),
-                filter.getTournamentId(),
-                filter.getHomeTeamName(),
-                filter.getAwayTeamName(),
-                filter.getDateFrom(),
-                filter.getDateTo(),
-                page,
-                size
-        );
-
-        if (cache.containsKey(key)) {
-            return toPage(cache.get(key), page, size);
-        }
-
         PageRequest pageable = PageRequest.of(page, size);
 
-        List<MatchDto> result = matchRepository.findWithFilters(filter, pageable)
-                .map(matchMapper::toDto)
-                .toList();
-
-        cache.put(key, result);
-
-        return toPage(result, page, size);
+        return matchRepository.findWithFilters(filter, pageable)
+            .map(matchMapper::toDto);
     }
 
     @Transactional(readOnly = true)
     public Page<MatchDto> findMatchesNative(MatchFilter filter, int page, int size) {
-        MatchSearchKey key = new MatchSearchKey(
-                filter.getName(),
-                filter.getLocation(),
-                filter.getTournamentId(),
-                filter.getHomeTeamName(),
-                filter.getAwayTeamName(),
-                filter.getDateFrom(),
-                filter.getDateTo(),
-                page,
-                size
-        );
-
-        if (cache.containsKey(key)) {
-            return toPage(cache.get(key), page, size);
-        }
-
         PageRequest pageable = PageRequest.of(page, size);
 
-        List<MatchDto> result = matchRepository.findWithFiltersNative(filter, pageable)
-                .map(matchMapper::toDto)
-                .toList();
-
-        cache.put(key, result);
-
-        return toPage(result, page, size);
-    }
-
-    private Page<MatchDto> toPage(List<MatchDto> list, int page, int size) {
-        int start = Math.min(page * size, list.size());
-        int end = Math.min(start + size, list.size());
-        List<MatchDto> subList = list.subList(start, end);
-        return new org.springframework.data.domain.PageImpl<>(subList, PageRequest.of(page, size), list.size());
+        return matchRepository.findWithFiltersNative(filter, pageable)
+            .map(matchMapper::toDto);
     }
 }

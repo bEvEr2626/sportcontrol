@@ -6,6 +6,9 @@ import com.example.sportcontrol.service.MatchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
 
 @RestController
 @RequestMapping("/matches")
@@ -21,7 +24,7 @@ public class MatchController {
         return matchService.findMatches(new MatchFilter(), page, size);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id:\\d+}")
     public MatchDto getById(@PathVariable Long id) {
         return matchService.getById(id);
     }
@@ -31,29 +34,28 @@ public class MatchController {
         return matchService.create(dto);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id:\\d+}")
     public MatchDto update(@PathVariable Long id, @RequestBody MatchDto dto) {
         return matchService.update(id, dto);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id:\\d+}")
     public void delete(@PathVariable Long id) {
         matchService.delete(id);
     }
 
     @GetMapping("/search")
-    public Page<MatchDto> search(
-            @ModelAttribute MatchFilter filter,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return matchService.findMatches(filter, page, size);
-    }
+    public ResponseEntity<Page<MatchDto>> search(
+        @ModelAttribute MatchFilter filter,
+        @RequestParam(defaultValue = "jpql") String queryType,
+        @PageableDefault(size = 10, sort = "date") Pageable pageable
+    ) {
+        boolean useNative = "native".equalsIgnoreCase(queryType);
 
-    @GetMapping("/search/native")
-    public Page<MatchDto> searchNative(
-            @ModelAttribute MatchFilter filter,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return matchService.findMatchesNative(filter, page, size);
+        Page<MatchDto> result = useNative
+            ? matchService.findMatchesNative(filter, pageable.getPageNumber(), pageable.getPageSize())
+            : matchService.findMatches(filter, pageable.getPageNumber(), pageable.getPageSize());
+
+        return ResponseEntity.ok(result);
     }
 }
