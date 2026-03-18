@@ -1,5 +1,7 @@
 package com.example.sportcontrol.service;
 
+import com.example.sportcontrol.dto.MatchFilter;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
@@ -16,6 +18,18 @@ public class MatchSearchKey {
     private LocalDateTime dateTo;
     private int page;
     private int size;
+
+    public MatchSearchKey(MatchFilter filter, int page, int size) {
+        this.name = filter.getName();
+        this.location = filter.getLocation();
+        this.tournamentId = filter.getTournamentId();
+        this.homeTeamName = filter.getHomeTeamName();
+        this.awayTeamName = filter.getAwayTeamName();
+        this.dateFrom = filter.getDateFrom();
+        this.dateTo = filter.getDateTo();
+        this.page = page;
+        this.size = size;
+    }
 
     @Override
     public boolean equals(Object o) {

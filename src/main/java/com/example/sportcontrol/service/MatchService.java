@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Service
@@ -32,13 +31,42 @@ public class MatchService {
     private final TeamRepository teamRepository;
     private final MatchMapper matchMapper;
 
-    private final Map<MatchSearchKey, List<MatchDto>> cache = new HashMap<>();
+    private final Map<MatchSearchKey, Page<MatchDto>> cache = new HashMap<>();
 
     @Transactional(readOnly = true)
-    public List<MatchDto> getAll() {
-        return matchRepository.findAllBy().stream()
-                .map(matchMapper::toDto)
-                .toList();
+    public Page<MatchDto> findMatches(MatchFilter filter, int page, int size) {
+        MatchSearchKey key = new MatchSearchKey(filter, page, size);
+
+        if (cache.containsKey(key)) {
+            return cache.get(key);
+        }
+
+        PageRequest pageable = PageRequest.of(page, size);
+
+        Page<MatchDto> result = matchRepository.findWithFilters(filter, pageable)
+                .map(matchMapper::toDto);
+
+        cache.put(key, result);
+
+        return result;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<MatchDto> findMatchesNative(MatchFilter filter, int page, int size) {
+        MatchSearchKey key = new MatchSearchKey(filter, page, size);
+
+        if (cache.containsKey(key)) {
+            return cache.get(key);
+        }
+
+        PageRequest pageable = PageRequest.of(page, size);
+
+        Page<MatchDto> result = matchRepository.findWithFiltersNative(filter, pageable)
+                .map(matchMapper::toDto);
+
+        cache.put(key, result);
+
+        return result;
     }
 
     @Transactional(readOnly = true)
@@ -124,18 +152,9 @@ public class MatchService {
     }
 
     @Transactional(readOnly = true)
-    public Page<MatchDto> findMatches(MatchFilter filter, int page, int size) {
-        PageRequest pageable = PageRequest.of(page, size);
-
-        return matchRepository.findWithFilters(filter, pageable)
-            .map(matchMapper::toDto);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<MatchDto> findMatchesNative(MatchFilter filter, int page, int size) {
-        PageRequest pageable = PageRequest.of(page, size);
-
-        return matchRepository.findWithFiltersNative(filter, pageable)
-            .map(matchMapper::toDto);
+    public java.util.List<MatchDto> getAll() {
+        return matchRepository.findAllBy().stream()
+                .map(matchMapper::toDto)
+                .toList();
     }
 }
