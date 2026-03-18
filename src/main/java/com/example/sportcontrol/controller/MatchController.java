@@ -46,7 +46,7 @@ public class MatchController {
 
     @GetMapping("/search")
     public ResponseEntity<Page<MatchDto>> search(
-        @ModelAttribute MatchFilter filter,
+        @RequestBody MatchFilter filter,
         @RequestParam(defaultValue = "jpql") String queryType,
         @PageableDefault(size = 10, sort = "date") Pageable pageable
     ) {
