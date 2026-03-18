@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -28,20 +29,8 @@ public class TournamentBatchService {
     private final MatchRepository matchRepository;
     private final TeamRepository teamRepository;
 
-    public void createTournamentWithMatches(TournamentWithMatchesDto dto) {
-        Tournament tournament = saveTournamentWithMatches(dto);
-        LOG.info("Tournament id={} with {} matches saved (no @Transactional)",
-                tournament.getId(), dto.getMatches().size());
-    }
-    
     @Transactional
-    public void createTournamentWithMatchesTransactional(TournamentWithMatchesDto dto) {
-        Tournament tournament = saveTournamentWithMatches(dto);
-        LOG.info("Tournament id={} with {} matches saved (@Transactional)",
-                tournament.getId(), dto.getMatches().size());
-    }
-
-    private Tournament saveTournamentWithMatches(TournamentWithMatchesDto dto) {
+    public Tournament createTournamentWithMatches(TournamentWithMatchesDto dto) {
         Sport sport = sportRepository.findById(dto.getSportId())
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Sport not found: " + dto.getSportId()));
@@ -50,30 +39,42 @@ public class TournamentBatchService {
         tournament.setName(dto.getTournamentName());
         tournament.setSlug(dto.getTournamentSlug());
         tournament.setSport(sport);
-        tournamentRepository.save(tournament);
-        LOG.info("Tournament saved with id={}", tournament.getId());
 
-        for (int i = 0; i < dto.getMatches().size(); i++) {
-            MatchDto matchDto = dto.getMatches().get(i);
+        List<Long> teamIds = dto.getMatches().stream()
+                .flatMap(m -> List.of(m.getHomeTeamId(), m.getAwayTeamId()).stream())
+                .distinct()
+                .toList();
 
-            Team homeTeam = teamRepository.findById(matchDto.getHomeTeamId())
-                    .orElseThrow(() -> new EntityNotFoundException(
-                            "Team not found: " + matchDto.getHomeTeamId()));
-            Team awayTeam = teamRepository.findById(matchDto.getAwayTeamId())
-                    .orElseThrow(() -> new EntityNotFoundException(
-                            "Team not found: " + matchDto.getAwayTeamId()));
+        List<Team> teams = teamRepository.findAllById(teamIds);
+        if (teams.size() != teamIds.size()) {
+            throw new EntityNotFoundException("Some teams not found");
+        }
+
+        tournament.setTeams(teams);
+
+        Tournament savedTournament = tournamentRepository.save(tournament);
+        LOG.info("Tournament saved with id={}", savedTournament.getId());
+
+        for (MatchDto matchDto : dto.getMatches()) {
+            Team homeTeam = teams.stream()
+                    .filter(t -> t.getId().equals(matchDto.getHomeTeamId()))
+                    .findFirst().orElseThrow();
+            Team awayTeam = teams.stream()
+                    .filter(t -> t.getId().equals(matchDto.getAwayTeamId()))
+                    .findFirst().orElseThrow();
 
             Match match = new Match();
             match.setName(matchDto.getName());
             match.setLocation(matchDto.getLocation());
             match.setDate(matchDto.getDate());
-            match.setTournament(tournament);
+            match.setTournament(savedTournament);
             match.setHomeTeam(homeTeam);
             match.setAwayTeam(awayTeam);
+
             matchRepository.save(match);
-            LOG.info("Match #{} saved with id={}", i + 1, match.getId());
+            LOG.info("Match '{}' saved with id={}", match.getName(), match.getId());
         }
 
-        return tournament;
+        return savedTournament;
     }
 }
