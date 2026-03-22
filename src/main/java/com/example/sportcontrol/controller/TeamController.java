@@ -1,4 +1,7 @@
+
 package com.example.sportcontrol.controller;
+
+import org.springframework.web.bind.annotation.PatchMapping;
 
 import java.util.List;
 
@@ -20,6 +23,11 @@ import lombok.RequiredArgsConstructor;
 public class TeamController {
 
     private final TeamService teamService;
+
+    @PatchMapping("/{id}")
+    public TeamDto patch(@PathVariable Long id, @RequestBody TeamDto dto) {
+        return teamService.update(id, dto);
+    }
 
     @GetMapping
     public List<TeamDto> getAll() {

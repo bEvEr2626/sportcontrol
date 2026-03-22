@@ -38,7 +38,6 @@ public class SportService {
         Sport existing = sportRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Sport not found: " + id));
         existing.setName(dto.getName());
-        existing.setSlug(dto.getSlug());
         return sportMapper.toDto(sportRepository.save(existing));
     }
 

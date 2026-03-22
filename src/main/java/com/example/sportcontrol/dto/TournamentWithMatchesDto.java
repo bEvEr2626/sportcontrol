@@ -15,9 +15,6 @@ public class TournamentWithMatchesDto {
     @Size(max = 255)
     private String tournamentName;
 
-    @NotBlank
-    @Size(max = 255)
-    private String tournamentSlug;
 
     @NotNull
     private Long sportId;

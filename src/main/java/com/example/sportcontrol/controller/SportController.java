@@ -1,4 +1,7 @@
+
 package com.example.sportcontrol.controller;
+
+import org.springframework.web.bind.annotation.PatchMapping;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,6 +21,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RequiredArgsConstructor
 public class SportController {
     private final SportService sportService;
+
+    @PatchMapping("/{id}")
+    public SportDto patch(@PathVariable Long id, @RequestBody SportDto dto) {
+        return sportService.update(id, dto);
+    }
 
     @GetMapping
     public List<SportDto> getAll() {

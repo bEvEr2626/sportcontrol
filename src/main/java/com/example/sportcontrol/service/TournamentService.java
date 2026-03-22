@@ -2,7 +2,6 @@ package com.example.sportcontrol.service;
 
 import java.util.List;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import com.example.sportcontrol.dto.TournamentDto;
 import com.example.sportcontrol.entity.Sport;
 import com.example.sportcontrol.exception.EntityNotFoundException;
@@ -25,12 +24,6 @@ public class TournamentService {
                 .toList();
     }
 
-    @Transactional(readOnly = true)
-    public List<TournamentDto> getAllTournamentsNPlusOne() {
-        return tournamentRepository.findAll().stream()
-                .map(tournamentMapper::toDto)
-                .toList();
-    }
 
     public TournamentDto create(TournamentDto dto) {
         Tournament entity = tournamentMapper.toEntity(dto);
@@ -52,7 +45,6 @@ public class TournamentService {
         Tournament existing = tournamentRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Tournament " + id + " not found"));
         existing.setName(dto.getName());
-        existing.setSlug(dto.getSlug());
         if (dto.getSportId() != null) {
             Sport sport = sportRepository.findById(dto.getSportId())
                     .orElseThrow(() -> new EntityNotFoundException(

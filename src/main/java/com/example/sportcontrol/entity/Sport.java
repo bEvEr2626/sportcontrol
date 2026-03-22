@@ -1,7 +1,6 @@
 package com.example.sportcontrol.entity;
 
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -30,8 +29,6 @@ public class Sport {
 
     private String name;
 
-    @Column(unique = true)
-    private String slug;
 
     @OneToMany(mappedBy = "sport", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Tournament> tournaments = new ArrayList<>();

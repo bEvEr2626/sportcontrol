@@ -34,7 +34,6 @@ public class Tournament {
 
     private String name;
 
-    private String slug;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sport_id", nullable = false)

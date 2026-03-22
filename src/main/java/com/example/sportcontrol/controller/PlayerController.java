@@ -1,4 +1,7 @@
+
 package com.example.sportcontrol.controller;
+
+import org.springframework.web.bind.annotation.PatchMapping;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,6 +26,11 @@ import lombok.RequiredArgsConstructor;
 public class PlayerController {
 
     private final PlayerService playerService;
+
+    @PatchMapping("/{id}")
+    public PlayerDto patch(@PathVariable Long id, @RequestBody PlayerDto dto) {
+        return playerService.update(id, dto);
+    }
 
     @GetMapping
     public Page<PlayerDto> getAll(

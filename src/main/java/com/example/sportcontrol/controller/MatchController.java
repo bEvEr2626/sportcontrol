@@ -1,4 +1,7 @@
+
 package com.example.sportcontrol.controller;
+
+import org.springframework.web.bind.annotation.PatchMapping;
 
 import com.example.sportcontrol.dto.MatchDto;
 import com.example.sportcontrol.dto.MatchFilter;
@@ -16,6 +19,11 @@ import org.springframework.http.ResponseEntity;
 public class MatchController {
 
     private final MatchService matchService;
+
+    @PatchMapping("/{id:\\d+}")
+    public MatchDto patch(@PathVariable Long id, @RequestBody MatchDto dto) {
+        return matchService.update(id, dto);
+    }
 
     @GetMapping
     public Page<MatchDto> getAll(

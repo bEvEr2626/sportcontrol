@@ -1,4 +1,7 @@
+
 package com.example.sportcontrol.controller;
+
+import org.springframework.web.bind.annotation.PatchMapping;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,15 +23,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 public class TournamentController {
     private final TournamentService tournamentService;
 
+    @PatchMapping("/{id}")
+    public TournamentDto patch(@PathVariable Long id, @RequestBody TournamentDto dto) {
+        return tournamentService.update(id, dto);
+    }
+
     @GetMapping
     public List<TournamentDto> getAll() {
         return tournamentService.getAllTournaments();
     }
 
-    @GetMapping("/n-plus-one")
-    public List<TournamentDto> getAllNPlusOne() {
-        return tournamentService.getAllTournamentsNPlusOne();
-    }
 
     @PostMapping
     public TournamentDto create(@RequestBody TournamentDto dto) {
