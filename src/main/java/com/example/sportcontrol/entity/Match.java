@@ -11,6 +11,10 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+import jakarta.persistence.Cacheable;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,6 +22,8 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "matches")
+@Cacheable
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @Getter
 @Setter
 @NoArgsConstructor
