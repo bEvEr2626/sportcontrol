@@ -4,7 +4,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import com.example.sportcontrol.dto.TournamentDto;
 import com.example.sportcontrol.entity.Sport;
-import com.example.sportcontrol.exception.EntityNotFoundException;
+import java.util.NoSuchElementException;
 import com.example.sportcontrol.entity.Tournament;
 import com.example.sportcontrol.mapper.TournamentMapper;
 import com.example.sportcontrol.repository.SportRepository;
@@ -28,7 +28,7 @@ public class TournamentService {
     public TournamentDto create(TournamentDto dto) {
         Tournament entity = tournamentMapper.toEntity(dto);
         Sport sport = sportRepository.findById(dto.getSportId())
-                .orElseThrow(() -> new EntityNotFoundException("Sport not found with id: " + dto.getSportId()));
+                .orElseThrow(() -> new NoSuchElementException("Sport not found with id: " + dto.getSportId()));
         
         entity.setSport(sport);
         Tournament savedEntity = tournamentRepository.save(entity);
@@ -37,17 +37,17 @@ public class TournamentService {
 
     public TournamentDto getById(Long id) {
         return tournamentRepository.findById(id)
-                .map(tournamentMapper::toDto)
-                .orElseThrow(() -> new EntityNotFoundException("Tournament " + id + " not found"));
+            .map(tournamentMapper::toDto)
+                .orElseThrow(() -> new NoSuchElementException("Tournament " + id + " not found"));
     }
 
     public TournamentDto update(Long id, TournamentDto dto) {
         Tournament existing = tournamentRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Tournament " + id + " not found"));
+            .orElseThrow(() -> new NoSuchElementException("Tournament " + id + " not found"));
         existing.setName(dto.getName());
         if (dto.getSportId() != null) {
             Sport sport = sportRepository.findById(dto.getSportId())
-                    .orElseThrow(() -> new EntityNotFoundException(
+                    .orElseThrow(() -> new NoSuchElementException(
                         "Sport not found: " + dto.getSportId()));
             existing.setSport(sport);
         }

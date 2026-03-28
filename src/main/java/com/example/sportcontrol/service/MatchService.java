@@ -5,7 +5,7 @@ import com.example.sportcontrol.dto.MatchFilter;
 import com.example.sportcontrol.entity.Match;
 import com.example.sportcontrol.entity.Team;
 import com.example.sportcontrol.entity.Tournament;
-import com.example.sportcontrol.exception.EntityNotFoundException;
+import java.util.NoSuchElementException;
 import com.example.sportcontrol.mapper.MatchMapper;
 import com.example.sportcontrol.repository.MatchRepository;
 import com.example.sportcontrol.repository.TeamRepository;
@@ -72,8 +72,8 @@ public class MatchService {
     @Transactional(readOnly = true)
     public MatchDto getById(Long id) {
         return matchRepository.findById(id)
-                .map(matchMapper::toDto)
-                .orElse(null);
+            .map(matchMapper::toDto)
+            .orElseThrow(() -> new NoSuchElementException("Match not found: " + id));
     }
 
     @Transactional
@@ -82,22 +82,22 @@ public class MatchService {
 
         if (dto.getTournamentId() != null) {
             Tournament tournament = tournamentRepository.findById(dto.getTournamentId())
-                    .orElseThrow(() -> new EntityNotFoundException(
-                            TOURNAMENT_NOT_FOUND + dto.getTournamentId()));
+                .orElseThrow(() -> new NoSuchElementException(
+                    TOURNAMENT_NOT_FOUND + dto.getTournamentId()));
             entity.setTournament(tournament);
         }
 
         if (dto.getHomeTeamId() != null) {
             Team homeTeam = teamRepository.findById(dto.getHomeTeamId())
-                    .orElseThrow(() -> new EntityNotFoundException(
-                            TEAM_NOT_FOUND + dto.getHomeTeamId()));
+                .orElseThrow(() -> new NoSuchElementException(
+                    TEAM_NOT_FOUND + dto.getHomeTeamId()));
             entity.setHomeTeam(homeTeam);
         }
 
         if (dto.getAwayTeamId() != null) {
             Team awayTeam = teamRepository.findById(dto.getAwayTeamId())
-                    .orElseThrow(() -> new EntityNotFoundException(
-                            TEAM_NOT_FOUND + dto.getAwayTeamId()));
+                .orElseThrow(() -> new NoSuchElementException(
+                    TEAM_NOT_FOUND + dto.getAwayTeamId()));
             entity.setAwayTeam(awayTeam);
         }
 
@@ -111,7 +111,7 @@ public class MatchService {
     @Transactional
     public MatchDto update(Long id, MatchDto dto) {
         Match existing = matchRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Match not found: " + id));
+            .orElseThrow(() -> new NoSuchElementException("Match not found: " + id));
 
         existing.setName(dto.getName());
         existing.setLocation(dto.getLocation());
@@ -119,22 +119,22 @@ public class MatchService {
 
         if (dto.getTournamentId() != null) {
             Tournament tournament = tournamentRepository.findById(dto.getTournamentId())
-                    .orElseThrow(() -> new EntityNotFoundException(
-                            TOURNAMENT_NOT_FOUND + dto.getTournamentId()));
+                .orElseThrow(() -> new NoSuchElementException(
+                    TOURNAMENT_NOT_FOUND + dto.getTournamentId()));
             existing.setTournament(tournament);
         }
 
         if (dto.getHomeTeamId() != null) {
             Team homeTeam = teamRepository.findById(dto.getHomeTeamId())
-                    .orElseThrow(() -> new EntityNotFoundException(
-                            TEAM_NOT_FOUND + dto.getHomeTeamId()));
+                .orElseThrow(() -> new NoSuchElementException(
+                    TEAM_NOT_FOUND + dto.getHomeTeamId()));
             existing.setHomeTeam(homeTeam);
         }
 
         if (dto.getAwayTeamId() != null) {
             Team awayTeam = teamRepository.findById(dto.getAwayTeamId())
-                    .orElseThrow(() -> new EntityNotFoundException(
-                            TEAM_NOT_FOUND + dto.getAwayTeamId()));
+                .orElseThrow(() -> new NoSuchElementException(
+                    TEAM_NOT_FOUND + dto.getAwayTeamId()));
             existing.setAwayTeam(awayTeam);
         }
 

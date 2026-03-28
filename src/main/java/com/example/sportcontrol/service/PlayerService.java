@@ -3,7 +3,7 @@ package com.example.sportcontrol.service;
 import org.springframework.stereotype.Service;
 import com.example.sportcontrol.dto.PlayerDto;
 import com.example.sportcontrol.entity.Player;
-import com.example.sportcontrol.exception.EntityNotFoundException;
+import java.util.NoSuchElementException;
 import com.example.sportcontrol.entity.Team;
 import com.example.sportcontrol.mapper.PlayerMapper;
 import com.example.sportcontrol.repository.PlayerRepository;
@@ -31,15 +31,15 @@ public class PlayerService {
 
     public PlayerDto getById(Long id) {
         return playerRepository.findById(id)
-                .map(playerMapper::toDto)
-                .orElseThrow(() -> new EntityNotFoundException("Player " + id + NOTFOUND));
+            .map(playerMapper::toDto)
+                .orElseThrow(() -> new NoSuchElementException("Player " + id + NOTFOUND));
     }
 
     public PlayerDto create(PlayerDto dto) {
         Player entity = playerMapper.toEntity(dto);
         if (dto.getTeamId() != null) {
             Team team = teamRepository.findById(dto.getTeamId())
-                    .orElseThrow(() -> new EntityNotFoundException("Team " + dto.getTeamId() + NOTFOUND));
+                .orElseThrow(() -> new NoSuchElementException("Team " + dto.getTeamId() + NOTFOUND));
             entity.setTeam(team);
         }
         return playerMapper.toDto(playerRepository.save(entity));
@@ -47,11 +47,11 @@ public class PlayerService {
 
     public PlayerDto update(Long id, PlayerDto dto) {
         Player existing = playerRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Player " + id + NOTFOUND));
+                .orElseThrow(() -> new NoSuchElementException("Player " + id + NOTFOUND));
         existing.setName(dto.getName());
         if (dto.getTeamId() != null) {
             Team team = teamRepository.findById(dto.getTeamId())
-                .orElseThrow(() -> new EntityNotFoundException("Team not found: " + dto.getTeamId()));
+                .orElseThrow(() -> new NoSuchElementException("Team not found: " + dto.getTeamId()));
             existing.setTeam(team);
         }
         return playerMapper.toDto(playerRepository.save(existing));

@@ -4,7 +4,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import com.example.sportcontrol.dto.TeamDto;
 import com.example.sportcontrol.entity.Team;
-import com.example.sportcontrol.exception.EntityNotFoundException;
+import java.util.NoSuchElementException;
 import com.example.sportcontrol.mapper.TeamMapper;
 import com.example.sportcontrol.repository.TeamRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +24,8 @@ public class TeamService {
 
     public TeamDto getById(Long id) {
         return teamRepository.findById(id)
-                .map(teamMapper::toDto)
-                .orElseThrow(() -> new EntityNotFoundException("Team " + id + " not found"));
+            .map(teamMapper::toDto)
+                .orElseThrow(() -> new NoSuchElementException("Team " + id + " not found"));
     }
 
     public TeamDto create(TeamDto dto) {
@@ -35,7 +35,7 @@ public class TeamService {
 
     public TeamDto update(Long id, TeamDto dto) {
         Team existing = teamRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Team " + id + " not found"));
+            .orElseThrow(() -> new NoSuchElementException("Team " + id + " not found"));
         existing.setName(dto.getName());
         return teamMapper.toDto(teamRepository.save(existing));
     }
