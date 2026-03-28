@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.example.sportcontrol.dto.PlayerDto;
+import jakarta.validation.Valid;
 import com.example.sportcontrol.service.PlayerService;
 
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,7 @@ public class PlayerController {
     private final PlayerService playerService;
 
     @PatchMapping("/{id}")
-    public PlayerDto patch(@PathVariable Long id, @RequestBody PlayerDto dto) {
+    public PlayerDto patch(@PathVariable Long id, @RequestBody @Valid PlayerDto dto) {
         return playerService.update(id, dto);
     }
 
@@ -47,12 +48,12 @@ public class PlayerController {
     }
 
     @PostMapping
-    public PlayerDto create(@RequestBody PlayerDto dto) {
+    public PlayerDto create(@RequestBody @Valid PlayerDto dto) {
         return playerService.create(dto);
     }
 
     @PutMapping("/{id}")
-    public PlayerDto update(@PathVariable Long id, @RequestBody PlayerDto dto) {
+    public PlayerDto update(@PathVariable Long id, @RequestBody @Valid PlayerDto dto) {
         return playerService.update(id, dto);
     }
 

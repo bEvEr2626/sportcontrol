@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import lombok.RequiredArgsConstructor;
 import com.example.sportcontrol.dto.TournamentDto;
+import jakarta.validation.Valid;
 import com.example.sportcontrol.service.TournamentService;
 import java.util.List;
 
@@ -24,7 +25,7 @@ public class TournamentController {
     private final TournamentService tournamentService;
 
     @PatchMapping("/{id}")
-    public TournamentDto patch(@PathVariable Long id, @RequestBody TournamentDto dto) {
+    public TournamentDto patch(@PathVariable Long id, @RequestBody @Valid TournamentDto dto) {
         return tournamentService.update(id, dto);
     }
 
@@ -35,7 +36,7 @@ public class TournamentController {
 
 
     @PostMapping
-    public TournamentDto create(@RequestBody TournamentDto dto) {
+    public TournamentDto create(@RequestBody @Valid TournamentDto dto) {
         return tournamentService.create(dto);
     }
     
@@ -45,7 +46,7 @@ public class TournamentController {
     }
 
     @PutMapping("/{id}")
-    public TournamentDto update(@PathVariable Long id, @RequestBody TournamentDto dto) {
+    public TournamentDto update(@PathVariable Long id, @RequestBody @Valid TournamentDto dto) {
         return tournamentService.update(id, dto);
     }
 

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.example.sportcontrol.dto.TeamDto;
+import jakarta.validation.Valid;
 import com.example.sportcontrol.service.TeamService;
 import lombok.RequiredArgsConstructor;
 
@@ -25,7 +26,7 @@ public class TeamController {
     private final TeamService teamService;
 
     @PatchMapping("/{id}")
-    public TeamDto patch(@PathVariable Long id, @RequestBody TeamDto dto) {
+    public TeamDto patch(@PathVariable Long id, @RequestBody @Valid TeamDto dto) {
         return teamService.update(id, dto);
     }
 
@@ -40,12 +41,12 @@ public class TeamController {
     }
 
     @PostMapping
-    public TeamDto create(@RequestBody TeamDto dto) {
+    public TeamDto create(@RequestBody @Valid TeamDto dto) {
         return teamService.create(dto);
     }
 
     @PutMapping("/{id}")
-    public TeamDto update(@PathVariable Long id, @RequestBody TeamDto dto) {
+    public TeamDto update(@PathVariable Long id, @RequestBody @Valid TeamDto dto) {
         return teamService.update(id, dto);
     }
 

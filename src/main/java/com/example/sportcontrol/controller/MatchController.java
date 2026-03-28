@@ -4,6 +4,7 @@ package com.example.sportcontrol.controller;
 import org.springframework.web.bind.annotation.PatchMapping;
 
 import com.example.sportcontrol.dto.MatchDto;
+import jakarta.validation.Valid;
 import com.example.sportcontrol.dto.MatchFilter;
 import com.example.sportcontrol.service.MatchService;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,7 @@ public class MatchController {
     private final MatchService matchService;
 
     @PatchMapping("/{id:\\d+}")
-    public MatchDto patch(@PathVariable Long id, @RequestBody MatchDto dto) {
+    public MatchDto patch(@PathVariable Long id, @RequestBody @Valid MatchDto dto) {
         return matchService.update(id, dto);
     }
 
@@ -38,12 +39,12 @@ public class MatchController {
     }
 
     @PostMapping
-    public MatchDto create(@RequestBody MatchDto dto) {
+    public MatchDto create(@RequestBody @Valid MatchDto dto) {
         return matchService.create(dto);
     }
 
     @PutMapping("/{id:\\d+}")
-    public MatchDto update(@PathVariable Long id, @RequestBody MatchDto dto) {
+    public MatchDto update(@PathVariable Long id, @RequestBody @Valid MatchDto dto) {
         return matchService.update(id, dto);
     }
 
@@ -54,7 +55,7 @@ public class MatchController {
 
     @GetMapping("/search")
     public ResponseEntity<Page<MatchDto>> search(
-        @RequestBody MatchFilter filter,
+        @RequestBody @Valid MatchFilter filter,
         @RequestParam(defaultValue = "jpql") String queryType,
         @PageableDefault(size = 10, sort = "date") Pageable pageable
     ) {

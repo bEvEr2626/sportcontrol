@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.example.sportcontrol.dto.SportDto;
+import jakarta.validation.Valid;
 import com.example.sportcontrol.service.SportService;
 import lombok.RequiredArgsConstructor;
 import java.util.List;
@@ -23,7 +24,7 @@ public class SportController {
     private final SportService sportService;
 
     @PatchMapping("/{id}")
-    public SportDto patch(@PathVariable Long id, @RequestBody SportDto dto) {
+    public SportDto patch(@PathVariable Long id, @RequestBody @Valid SportDto dto) {
         return sportService.update(id, dto);
     }
 
@@ -33,7 +34,7 @@ public class SportController {
     }
     
     @PostMapping
-    public SportDto create(@RequestBody SportDto dto) {
+    public SportDto create(@RequestBody @Valid SportDto dto) {
         return sportService.create(dto);
     }
 
