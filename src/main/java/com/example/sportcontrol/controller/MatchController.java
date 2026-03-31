@@ -1,7 +1,9 @@
 
 package com.example.sportcontrol.controller;
 
-import org.springframework.web.bind.annotation.PatchMapping;
+
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 
 import com.example.sportcontrol.dto.MatchDto;
 import jakarta.validation.Valid;
@@ -53,17 +55,30 @@ public class MatchController {
         matchService.delete(id);
     }
 
-    @GetMapping("/search")
+    @PostMapping("/search")
     public ResponseEntity<Page<MatchDto>> search(
         @RequestBody @Valid MatchFilter filter,
         @RequestParam(defaultValue = "jpql") String queryType,
-        @PageableDefault(size = 10, sort = "date") Pageable pageable
+        @Parameter(
+            description = "Page number (0-based)",
+            example = "0",
+            in = ParameterIn.QUERY,
+            name = "page"
+        )
+        @RequestParam(defaultValue = "0") int page,
+        @Parameter(
+            description = "Page size",
+            example = "10",
+            in = ParameterIn.QUERY,
+            name = "size"
+        )
+        @RequestParam(defaultValue = "10") int size
     ) {
         boolean useNative = "native".equalsIgnoreCase(queryType);
 
         Page<MatchDto> result = useNative
-            ? matchService.findMatchesNative(filter, pageable.getPageNumber(), pageable.getPageSize())
-            : matchService.findMatches(filter, pageable.getPageNumber(), pageable.getPageSize());
+            ? matchService.findMatchesNative(filter, page, size)
+            : matchService.findMatches(filter, page, size);
 
         return ResponseEntity.ok(result);
     }

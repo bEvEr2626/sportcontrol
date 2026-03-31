@@ -1,19 +1,22 @@
 package com.example.sportcontrol.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-
 import lombok.Data;
 
 @Data
 public class TournamentDto {
 
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "Tournament ID (generated automatically)", example = "1")
     private Long id;
 
     @NotBlank
     @jakarta.validation.constraints.Size(min = 2)
+    @Schema(description = "Tournament name", example = "Russian Cup")
     private String name;
 
     @NotNull
+    @Schema(description = "Sport ID", example = "2")
     private Long sportId;
 }

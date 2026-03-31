@@ -12,6 +12,8 @@ import com.example.sportcontrol.entity.Player;
 
 @Repository
 public interface PlayerRepository extends JpaRepository<Player, Long> {
+
+    Optional<Player> findByNameAndTeam_Id(String name, Long teamId);
     
     @EntityGraph(attributePaths = {"team"})
     Page<Player> findAllBy(Pageable pageable);

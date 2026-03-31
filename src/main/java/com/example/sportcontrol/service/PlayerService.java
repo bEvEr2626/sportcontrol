@@ -45,6 +45,12 @@ public class PlayerService {
 
     public PlayerDto create(PlayerDto dto) {
         LOG.info("Creating player: {}", dto);
+        if (dto.getTeamId() != null && dto.getName() != null) {
+            playerRepository.findByNameAndTeam_Id(dto.getName(), dto.getTeamId()).ifPresent(existing -> {
+                LOG.warn("Player with name '{}' already exists in team {}", dto.getName(), dto.getTeamId());
+                throw new org.springframework.dao.DataIntegrityViolationException("Player with this name already exists in the team");
+            });
+        }
         Player entity = playerMapper.toEntity(dto);
         if (dto.getTeamId() != null) {
             Team team = teamRepository.findById(dto.getTeamId())
