@@ -6,6 +6,8 @@ import com.example.sportcontrol.entity.Match;
 import com.example.sportcontrol.entity.Team;
 import com.example.sportcontrol.entity.Tournament;
 import java.util.NoSuchElementException;
+import java.util.Optional;
+
 import com.example.sportcontrol.mapper.MatchMapper;
 import com.example.sportcontrol.repository.MatchRepository;
 import com.example.sportcontrol.repository.TeamRepository;
@@ -19,7 +21,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -30,6 +35,9 @@ public class MatchService {
 
     private static final String TEAM_NOT_FOUND = "Team not found: ";
     private static final String TOURNAMENT_NOT_FOUND = "Tournament not found: ";
+    private static final String TOURNAMENT_NOT_FOUND_LOG = "Tournament not found: {}";
+    private static final String HOME_TEAM_NOT_FOUND_LOG = "Home team not found: {}";
+    private static final String AWAY_TEAM_NOT_FOUND_LOG = "Away team not found: {}";
 
     private final MatchRepository matchRepository;
     private final TournamentRepository tournamentRepository;
@@ -88,7 +96,7 @@ public class MatchService {
         if (dto.getTournamentId() != null) {
             Tournament tournament = tournamentRepository.findById(dto.getTournamentId())
                 .orElseThrow(() -> {
-                    LOG.warn("Tournament not found: {}", dto.getTournamentId());
+                    LOG.warn(TOURNAMENT_NOT_FOUND_LOG, dto.getTournamentId());
                     return new NoSuchElementException(TOURNAMENT_NOT_FOUND + dto.getTournamentId());
                 });
             entity.setTournament(tournament);
@@ -96,7 +104,7 @@ public class MatchService {
         if (dto.getHomeTeamId() != null) {
             Team homeTeam = teamRepository.findById(dto.getHomeTeamId())
                 .orElseThrow(() -> {
-                    LOG.warn("Home team not found: {}", dto.getHomeTeamId());
+                    LOG.warn(HOME_TEAM_NOT_FOUND_LOG, dto.getHomeTeamId());
                     return new NoSuchElementException(TEAM_NOT_FOUND + dto.getHomeTeamId());
                 });
             entity.setHomeTeam(homeTeam);
@@ -104,7 +112,7 @@ public class MatchService {
         if (dto.getAwayTeamId() != null) {
             Team awayTeam = teamRepository.findById(dto.getAwayTeamId())
                 .orElseThrow(() -> {
-                    LOG.warn("Away team not found: {}", dto.getAwayTeamId());
+                    LOG.warn(AWAY_TEAM_NOT_FOUND_LOG, dto.getAwayTeamId());
                     return new NoSuchElementException(TEAM_NOT_FOUND + dto.getAwayTeamId());
                 });
             entity.setAwayTeam(awayTeam);
@@ -129,7 +137,7 @@ public class MatchService {
         if (dto.getTournamentId() != null) {
             Tournament tournament = tournamentRepository.findById(dto.getTournamentId())
                 .orElseThrow(() -> {
-                    LOG.warn("Tournament not found: {}", dto.getTournamentId());
+                    LOG.warn(TOURNAMENT_NOT_FOUND_LOG, dto.getTournamentId());
                     return new NoSuchElementException(TOURNAMENT_NOT_FOUND + dto.getTournamentId());
                 });
             existing.setTournament(tournament);
@@ -137,7 +145,7 @@ public class MatchService {
         if (dto.getHomeTeamId() != null) {
             Team homeTeam = teamRepository.findById(dto.getHomeTeamId())
                 .orElseThrow(() -> {
-                    LOG.warn("Home team not found: {}", dto.getHomeTeamId());
+                    LOG.warn(HOME_TEAM_NOT_FOUND_LOG, dto.getHomeTeamId());
                     return new NoSuchElementException(TEAM_NOT_FOUND + dto.getHomeTeamId());
                 });
             existing.setHomeTeam(homeTeam);
@@ -145,7 +153,7 @@ public class MatchService {
         if (dto.getAwayTeamId() != null) {
             Team awayTeam = teamRepository.findById(dto.getAwayTeamId())
                 .orElseThrow(() -> {
-                    LOG.warn("Away team not found: {}", dto.getAwayTeamId());
+                    LOG.warn(AWAY_TEAM_NOT_FOUND_LOG, dto.getAwayTeamId());
                     return new NoSuchElementException(TEAM_NOT_FOUND + dto.getAwayTeamId());
                 });
             existing.setAwayTeam(awayTeam);
@@ -170,5 +178,82 @@ public class MatchService {
         return matchRepository.findAllBy().stream()
                 .map(matchMapper::toDto)
                 .toList();
+    }
+
+    @Transactional
+    public List<MatchDto> bulkCreateTransactional(List<MatchDto> matches) {
+        List<MatchDto> safeMatches = Optional.ofNullable(matches)
+            .filter(list -> !list.isEmpty())
+            .orElseThrow(() -> new IllegalArgumentException("Matches list cannot be empty"));
+        
+        List<MatchDto> result = safeMatches.stream()
+            .map(this::create)
+            .toList();
+        LOG.info("Bulk operation completed size={}", result.size());
+        return result;
+    }
+
+    public List<MatchDto> bulkCreateNoTransactional(List<MatchDto> matches) {
+        List<MatchDto> safeMatches = Optional.ofNullable(matches)
+            .filter(list -> !list.isEmpty())
+            .orElseThrow(() -> new IllegalArgumentException("Matches list cannot be empty"));
+
+        LOG.info("Starting bulk match operation WITHOUT transaction size={}", safeMatches.size());
+
+        List<MatchDto> result = new ArrayList<>();
+        Map<String, String> failedMatches = new LinkedHashMap<>();
+
+        for (int index = 0; index < safeMatches.size(); index++) {
+            MatchDto dto = safeMatches.get(index);
+            try {
+                LOG.info("Creating match: {}", dto);
+                Match entity = matchMapper.toEntity(dto);
+                if (dto.getTournamentId() != null) {
+                    Tournament tournament = tournamentRepository.findById(dto.getTournamentId())
+                        .orElseThrow(() -> {
+                            LOG.warn(TOURNAMENT_NOT_FOUND_LOG, dto.getTournamentId());
+                            return new NoSuchElementException(TOURNAMENT_NOT_FOUND + dto.getTournamentId());
+                        });
+                    entity.setTournament(tournament);
+                }
+                if (dto.getHomeTeamId() != null) {
+                    Team homeTeam = teamRepository.findById(dto.getHomeTeamId())
+                        .orElseThrow(() -> {
+                            LOG.warn(HOME_TEAM_NOT_FOUND_LOG, dto.getHomeTeamId());
+                            return new NoSuchElementException(TEAM_NOT_FOUND + dto.getHomeTeamId());
+                        });
+                    entity.setHomeTeam(homeTeam);
+                }
+                if (dto.getAwayTeamId() != null) {
+                    Team awayTeam = teamRepository.findById(dto.getAwayTeamId())
+                        .orElseThrow(() -> {
+                            LOG.warn(AWAY_TEAM_NOT_FOUND_LOG, dto.getAwayTeamId());
+                            return new NoSuchElementException(TEAM_NOT_FOUND + dto.getAwayTeamId());
+                        });
+                    entity.setAwayTeam(awayTeam);
+                }
+                Match saved = matchRepository.save(entity);
+                cache.clear();
+                LOG.info("Match created with id={}", saved.getId());
+                result.add(matchMapper.toDto(saved));
+            } catch (RuntimeException ex) {
+                String key = "match_%d".formatted(index + 1);
+                String failureMessage = ex.getMessage() == null
+                    ? ex.getClass().getSimpleName()
+                    : ex.getMessage();
+                failedMatches.put(key, failureMessage);
+                LOG.warn("Skipping failed match in non-transactional bulk {}: {}", key, failureMessage);
+            }
+        }
+
+        if (!failedMatches.isEmpty()) {
+            throw new IllegalStateException(
+                "Some matches were not saved. successCount=%d, failedCount=%d, failedMatches=%s"
+                    .formatted(result.size(), failedMatches.size(), failedMatches)
+            );
+        }
+
+        LOG.info("Bulk match operation WITHOUT transaction completed size={}", result.size());
+        return result;
     }
 }

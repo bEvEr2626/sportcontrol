@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import java.util.List;
 
 @RestController
 @RequestMapping("/matches")
@@ -53,9 +54,9 @@ public class MatchController {
         matchService.delete(id);
     }
 
-    @PostMapping("/search")
+    @GetMapping("/search")
     public ResponseEntity<Page<MatchDto>> search(
-        @RequestBody @Valid MatchFilter filter,
+        @ModelAttribute @Valid MatchFilter filter,
         @RequestParam(defaultValue = "jpql") String queryType,
         @PageableDefault(size = 10, sort = "date") Pageable pageable
     ) {
@@ -66,5 +67,17 @@ public class MatchController {
             : matchService.findMatches(filter, pageable.getPageNumber(), pageable.getPageSize());
 
         return ResponseEntity.ok(result);
+    }
+    
+    @PostMapping("/bulk")
+    public ResponseEntity<List<MatchDto>> bulkCreate(
+        @RequestBody @Valid List<MatchDto> matches) {
+        return ResponseEntity.ok(matchService.bulkCreateNoTransactional(matches));
+    }
+
+    @PostMapping("/bulk/tx")
+    public ResponseEntity<List<MatchDto>> bulkCreateTransactional(
+        @RequestBody @Valid List<MatchDto> matches) {
+        return ResponseEntity.ok(matchService.bulkCreateTransactional(matches));
     }
 }
