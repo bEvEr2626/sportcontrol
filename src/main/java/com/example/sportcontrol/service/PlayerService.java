@@ -8,6 +8,7 @@ import com.example.sportcontrol.entity.Team;
 import com.example.sportcontrol.mapper.PlayerMapper;
 import com.example.sportcontrol.repository.PlayerRepository;
 import com.example.sportcontrol.repository.TeamRepository;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
@@ -45,21 +46,17 @@ public class PlayerService {
 
     public PlayerDto create(PlayerDto dto) {
         LOG.info("Creating player: {}", dto);
-        if (dto.getTeamId() != null && dto.getName() != null) {
-            playerRepository.findByNameAndTeam_Id(dto.getName(), dto.getTeamId()).ifPresent(existing -> {
+        Optional.ofNullable(dto.getTeamId())
+            .flatMap(teamId -> Optional.ofNullable(dto.getName())
+                .map(name -> playerRepository.findByNameAndTeam_Id(name, teamId)))
+            .ifPresent(existing -> {
                 LOG.warn("Player with name '{}' already exists in team {}", dto.getName(), dto.getTeamId());
                 throw new org.springframework.dao.DataIntegrityViolationException("Player with this name already exists in the team");
             });
-        }
         Player entity = playerMapper.toEntity(dto);
-        if (dto.getTeamId() != null) {
-            Team team = teamRepository.findById(dto.getTeamId())
-                .orElseThrow(() -> {
-                    LOG.warn("Team not found: {}", dto.getTeamId());
-                    return new NoSuchElementException("Team " + dto.getTeamId() + NOTFOUND);
-                });
-            entity.setTeam(team);
-        }
+        Optional.ofNullable(dto.getTeamId())
+            .map(this::findTeamById)
+            .ifPresent(entity::setTeam);
         Player saved = playerRepository.save(entity);
         LOG.info("Player created with id={}", saved.getId());
         return playerMapper.toDto(saved);
@@ -73,14 +70,9 @@ public class PlayerService {
                     return new NoSuchElementException("Player " + id + NOTFOUND);
                 });
         existing.setName(dto.getName());
-        if (dto.getTeamId() != null) {
-            Team team = teamRepository.findById(dto.getTeamId())
-                .orElseThrow(() -> {
-                    LOG.warn("Team not found: {}", dto.getTeamId());
-                    return new NoSuchElementException("Team not found: " + dto.getTeamId());
-                });
-            existing.setTeam(team);
-        }
+        Optional.ofNullable(dto.getTeamId())
+            .map(this::findTeamById)
+            .ifPresent(existing::setTeam);
         Player saved = playerRepository.save(existing);
         LOG.info("Player updated with id={}", saved.getId());
         return playerMapper.toDto(saved);
@@ -90,5 +82,13 @@ public class PlayerService {
         LOG.info("Deleting player with id={}", id);
         playerRepository.deleteById(id);
         LOG.info("Player deleted: {}", id);
+    }
+
+    private Team findTeamById(Long teamId) {
+        return teamRepository.findById(teamId)
+            .orElseThrow(() -> {
+                LOG.warn("Team not found: {}", teamId);
+                return new NoSuchElementException("Team " + teamId + NOTFOUND);
+            });
     }
 }

@@ -1,6 +1,7 @@
 package com.example.sportcontrol.service;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 import com.example.sportcontrol.dto.TeamDto;
 import com.example.sportcontrol.entity.Team;
@@ -28,30 +29,25 @@ public class TeamService {
 
     public TeamDto getById(Long id) {
         LOG.debug("getById called with id={}", id);
-        return teamRepository.findById(id)
-            .map(teamMapper::toDto)
-            .orElseThrow(() -> {
-                LOG.warn("Team not found: {}", id);
-                return new NoSuchElementException("Team " + id + " not found");
-            });
+        return teamMapper.toDto(findTeamById(id));
     }
 
     public TeamDto create(TeamDto dto) {
-        LOG.info("Creating team: {}", dto);
-        Team entity = teamMapper.toEntity(dto);
+        TeamDto safeDto = Optional.ofNullable(dto)
+            .orElseThrow(() -> new IllegalArgumentException("Team payload cannot be null"));
+        LOG.info("Creating team: {}", safeDto);
+        Team entity = teamMapper.toEntity(safeDto);
         Team saved = teamRepository.save(entity);
         LOG.info("Team created with id={}", saved.getId());
         return teamMapper.toDto(saved);
     }
 
     public TeamDto update(Long id, TeamDto dto) {
-        LOG.info("Updating team id={} with data {}", id, dto);
-        Team existing = teamRepository.findById(id)
-            .orElseThrow(() -> {
-                LOG.warn("Team not found for update: {}", id);
-                return new NoSuchElementException("Team " + id + " not found");
-            });
-        existing.setName(dto.getName());
+        TeamDto safeDto = Optional.ofNullable(dto)
+            .orElseThrow(() -> new IllegalArgumentException("Team payload cannot be null"));
+        LOG.info("Updating team id={} with data {}", id, safeDto);
+        Team existing = findTeamById(id);
+        existing.setName(safeDto.getName());
         Team saved = teamRepository.save(existing);
         LOG.info("Team updated with id={}", saved.getId());
         return teamMapper.toDto(saved);
@@ -61,5 +57,13 @@ public class TeamService {
         LOG.info("Deleting team with id={}", id);
         teamRepository.deleteById(id);
         LOG.info("Team deleted: {}", id);
+    }
+
+    private Team findTeamById(Long id) {
+        return teamRepository.findById(id)
+            .orElseThrow(() -> {
+                LOG.warn("Team not found: {}", id);
+                return new NoSuchElementException("Team " + id + " not found");
+            });
     }
 }

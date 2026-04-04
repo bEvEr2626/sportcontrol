@@ -1,6 +1,7 @@
 package com.example.sportcontrol.service;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 import com.example.sportcontrol.dto.TournamentDto;
 import com.example.sportcontrol.entity.Sport;
@@ -30,13 +31,13 @@ public class TournamentService {
 
 
     public TournamentDto create(TournamentDto dto) {
-        LOG.info("Creating tournament: {}", dto);
-        Tournament entity = tournamentMapper.toEntity(dto);
-        Sport sport = sportRepository.findById(dto.getSportId())
-                .orElseThrow(() -> {
-                    LOG.warn("Sport not found: {}", dto.getSportId());
-                    return new NoSuchElementException("Sport not found with id: " + dto.getSportId());
-                });
+        TournamentDto safeDto = Optional.ofNullable(dto)
+            .orElseThrow(() -> new IllegalArgumentException("Tournament payload cannot be null"));
+        LOG.info("Creating tournament: {}", safeDto);
+        Tournament entity = tournamentMapper.toEntity(safeDto);
+        Long sportId = Optional.ofNullable(safeDto.getSportId())
+            .orElseThrow(() -> new IllegalArgumentException("Sport id is required for tournament creation"));
+        Sport sport = findSportById(sportId);
         entity.setSport(sport);
         Tournament savedEntity = tournamentRepository.save(entity);
         LOG.info("Tournament created with id={}", savedEntity.getId());
@@ -45,30 +46,18 @@ public class TournamentService {
 
     public TournamentDto getById(Long id) {
         LOG.debug("getById called with id={}", id);
-        return tournamentRepository.findById(id)
-            .map(tournamentMapper::toDto)
-            .orElseThrow(() -> {
-                LOG.warn("Tournament not found: {}", id);
-                return new NoSuchElementException("Tournament " + id + " not found");
-            });
+        return tournamentMapper.toDto(findTournamentById(id));
     }
 
     public TournamentDto update(Long id, TournamentDto dto) {
-        LOG.info("Updating tournament id={} with data {}", id, dto);
-        Tournament existing = tournamentRepository.findById(id)
-            .orElseThrow(() -> {
-                LOG.warn("Tournament not found for update: {}", id);
-                return new NoSuchElementException("Tournament " + id + " not found");
-            });
-        existing.setName(dto.getName());
-        if (dto.getSportId() != null) {
-            Sport sport = sportRepository.findById(dto.getSportId())
-                    .orElseThrow(() -> {
-                        LOG.warn("Sport not found: {}", dto.getSportId());
-                        return new NoSuchElementException("Sport not found: " + dto.getSportId());
-                    });
-            existing.setSport(sport);
-        }
+        TournamentDto safeDto = Optional.ofNullable(dto)
+            .orElseThrow(() -> new IllegalArgumentException("Tournament payload cannot be null"));
+        LOG.info("Updating tournament id={} with data {}", id, safeDto);
+        Tournament existing = findTournamentById(id);
+        existing.setName(safeDto.getName());
+        Optional.ofNullable(safeDto.getSportId())
+            .map(this::findSportById)
+            .ifPresent(existing::setSport);
         Tournament saved = tournamentRepository.save(existing);
         LOG.info("Tournament updated with id={}", saved.getId());
         return tournamentMapper.toDto(saved);
@@ -78,5 +67,21 @@ public class TournamentService {
         LOG.info("Deleting tournament with id={}", id);
         tournamentRepository.deleteById(id);
         LOG.info("Tournament deleted: {}", id);
+    }
+
+    private Tournament findTournamentById(Long tournamentId) {
+        return tournamentRepository.findById(tournamentId)
+            .orElseThrow(() -> {
+                LOG.warn("Tournament not found: {}", tournamentId);
+                return new NoSuchElementException("Tournament " + tournamentId + " not found");
+            });
+    }
+
+    private Sport findSportById(Long sportId) {
+        return sportRepository.findById(sportId)
+            .orElseThrow(() -> {
+                LOG.warn("Sport not found: {}", sportId);
+                return new NoSuchElementException("Sport not found: " + sportId);
+            });
     }
 }

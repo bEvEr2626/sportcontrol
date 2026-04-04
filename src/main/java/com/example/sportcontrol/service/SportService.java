@@ -1,6 +1,7 @@
 package com.example.sportcontrol.service;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 import com.example.sportcontrol.dto.SportDto;
 import com.example.sportcontrol.entity.Sport;
@@ -28,30 +29,25 @@ public class SportService {
 
     public final SportDto getById(Long id) {
         LOG.debug("getById called with id={}", id);
-        return sportRepository.findById(id)
-            .map(sportMapper::toDto)
-            .orElseThrow(() -> {
-                LOG.warn("Sport not found: {}", id);
-                return new NoSuchElementException("Sport " + id + " not found");
-            });
+        return sportMapper.toDto(findSportById(id));
     }
 
     public SportDto create(SportDto dto) { 
-        LOG.info("Creating sport: {}", dto);
-        Sport entity = sportMapper.toEntity(dto);
+        SportDto safeDto = Optional.ofNullable(dto)
+            .orElseThrow(() -> new IllegalArgumentException("Sport payload cannot be null"));
+        LOG.info("Creating sport: {}", safeDto);
+        Sport entity = sportMapper.toEntity(safeDto);
         Sport savedEntity = sportRepository.save(entity);
         LOG.info("Sport created with id={}", savedEntity.getId());
         return sportMapper.toDto(savedEntity);
     }
 
     public SportDto update(Long id, SportDto dto) {
-        LOG.info("Updating sport id={} with data {}", id, dto);
-        Sport existing = sportRepository.findById(id)
-            .orElseThrow(() -> {
-                LOG.warn("Sport not found for update: {}", id);
-                return new NoSuchElementException("Sport not found: " + id);
-            });
-        existing.setName(dto.getName());
+        SportDto safeDto = Optional.ofNullable(dto)
+            .orElseThrow(() -> new IllegalArgumentException("Sport payload cannot be null"));
+        LOG.info("Updating sport id={} with data {}", id, safeDto);
+        Sport existing = findSportById(id);
+        existing.setName(safeDto.getName());
         Sport saved = sportRepository.save(existing);
         LOG.info("Sport updated with id={}", saved.getId());
         return sportMapper.toDto(saved);
@@ -61,5 +57,13 @@ public class SportService {
         LOG.info("Deleting sport with id={}", id);
         sportRepository.deleteById(id);
         LOG.info("Sport deleted: {}", id);
+    }
+
+    private Sport findSportById(Long id) {
+        return sportRepository.findById(id)
+            .orElseThrow(() -> {
+                LOG.warn("Sport not found: {}", id);
+                return new NoSuchElementException("Sport " + id + " not found");
+            });
     }
 }

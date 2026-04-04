@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -93,30 +94,15 @@ public class MatchService {
     public MatchDto create(MatchDto dto) {
         LOG.info("Creating match: {}", dto);
         Match entity = matchMapper.toEntity(dto);
-        if (dto.getTournamentId() != null) {
-            Tournament tournament = tournamentRepository.findById(dto.getTournamentId())
-                .orElseThrow(() -> {
-                    LOG.warn(TOURNAMENT_NOT_FOUND_LOG, dto.getTournamentId());
-                    return new NoSuchElementException(TOURNAMENT_NOT_FOUND + dto.getTournamentId());
-                });
-            entity.setTournament(tournament);
-        }
-        if (dto.getHomeTeamId() != null) {
-            Team homeTeam = teamRepository.findById(dto.getHomeTeamId())
-                .orElseThrow(() -> {
-                    LOG.warn(HOME_TEAM_NOT_FOUND_LOG, dto.getHomeTeamId());
-                    return new NoSuchElementException(TEAM_NOT_FOUND + dto.getHomeTeamId());
-                });
-            entity.setHomeTeam(homeTeam);
-        }
-        if (dto.getAwayTeamId() != null) {
-            Team awayTeam = teamRepository.findById(dto.getAwayTeamId())
-                .orElseThrow(() -> {
-                    LOG.warn(AWAY_TEAM_NOT_FOUND_LOG, dto.getAwayTeamId());
-                    return new NoSuchElementException(TEAM_NOT_FOUND + dto.getAwayTeamId());
-                });
-            entity.setAwayTeam(awayTeam);
-        }
+        Optional.ofNullable(dto.getTournamentId())
+            .map(this::findTournamentById)
+            .ifPresent(entity::setTournament);
+        Optional.ofNullable(dto.getHomeTeamId())
+            .map(id -> findTeamById(id, HOME_TEAM_NOT_FOUND_LOG))
+            .ifPresent(entity::setHomeTeam);
+        Optional.ofNullable(dto.getAwayTeamId())
+            .map(id -> findTeamById(id, AWAY_TEAM_NOT_FOUND_LOG))
+            .ifPresent(entity::setAwayTeam);
         Match saved = matchRepository.save(entity);
         cache.clear();
         LOG.info("Match created with id={}", saved.getId());
@@ -134,30 +120,15 @@ public class MatchService {
         existing.setName(dto.getName());
         existing.setLocation(dto.getLocation());
         existing.setDate(dto.getDate());
-        if (dto.getTournamentId() != null) {
-            Tournament tournament = tournamentRepository.findById(dto.getTournamentId())
-                .orElseThrow(() -> {
-                    LOG.warn(TOURNAMENT_NOT_FOUND_LOG, dto.getTournamentId());
-                    return new NoSuchElementException(TOURNAMENT_NOT_FOUND + dto.getTournamentId());
-                });
-            existing.setTournament(tournament);
-        }
-        if (dto.getHomeTeamId() != null) {
-            Team homeTeam = teamRepository.findById(dto.getHomeTeamId())
-                .orElseThrow(() -> {
-                    LOG.warn(HOME_TEAM_NOT_FOUND_LOG, dto.getHomeTeamId());
-                    return new NoSuchElementException(TEAM_NOT_FOUND + dto.getHomeTeamId());
-                });
-            existing.setHomeTeam(homeTeam);
-        }
-        if (dto.getAwayTeamId() != null) {
-            Team awayTeam = teamRepository.findById(dto.getAwayTeamId())
-                .orElseThrow(() -> {
-                    LOG.warn(AWAY_TEAM_NOT_FOUND_LOG, dto.getAwayTeamId());
-                    return new NoSuchElementException(TEAM_NOT_FOUND + dto.getAwayTeamId());
-                });
-            existing.setAwayTeam(awayTeam);
-        }
+        Optional.ofNullable(dto.getTournamentId())
+            .map(this::findTournamentById)
+            .ifPresent(existing::setTournament);
+        Optional.ofNullable(dto.getHomeTeamId())
+            .map(teamId -> findTeamById(teamId, HOME_TEAM_NOT_FOUND_LOG))
+            .ifPresent(existing::setHomeTeam);
+        Optional.ofNullable(dto.getAwayTeamId())
+            .map(teamId -> findTeamById(teamId, AWAY_TEAM_NOT_FOUND_LOG))
+            .ifPresent(existing::setAwayTeam);
         Match saved = matchRepository.save(existing);
         cache.clear();
         LOG.info("Match updated with id={}", saved.getId());
@@ -203,35 +174,21 @@ public class MatchService {
         List<MatchDto> result = new ArrayList<>();
         Map<String, String> failedMatches = new LinkedHashMap<>();
 
-        for (int index = 0; index < safeMatches.size(); index++) {
+        IntStream.range(0, safeMatches.size()).forEach(index -> {
             MatchDto dto = safeMatches.get(index);
             try {
                 LOG.info("Creating match: {}", dto);
                 Match entity = matchMapper.toEntity(dto);
-                if (dto.getTournamentId() != null) {
-                    Tournament tournament = tournamentRepository.findById(dto.getTournamentId())
-                        .orElseThrow(() -> {
-                            LOG.warn(TOURNAMENT_NOT_FOUND_LOG, dto.getTournamentId());
-                            return new NoSuchElementException(TOURNAMENT_NOT_FOUND + dto.getTournamentId());
-                        });
-                    entity.setTournament(tournament);
-                }
-                if (dto.getHomeTeamId() != null) {
-                    Team homeTeam = teamRepository.findById(dto.getHomeTeamId())
-                        .orElseThrow(() -> {
-                            LOG.warn(HOME_TEAM_NOT_FOUND_LOG, dto.getHomeTeamId());
-                            return new NoSuchElementException(TEAM_NOT_FOUND + dto.getHomeTeamId());
-                        });
-                    entity.setHomeTeam(homeTeam);
-                }
-                if (dto.getAwayTeamId() != null) {
-                    Team awayTeam = teamRepository.findById(dto.getAwayTeamId())
-                        .orElseThrow(() -> {
-                            LOG.warn(AWAY_TEAM_NOT_FOUND_LOG, dto.getAwayTeamId());
-                            return new NoSuchElementException(TEAM_NOT_FOUND + dto.getAwayTeamId());
-                        });
-                    entity.setAwayTeam(awayTeam);
-                }
+                Optional.ofNullable(dto.getTournamentId())
+                    .map(this::findTournamentById)
+                    .ifPresent(entity::setTournament);
+                Optional.ofNullable(dto.getHomeTeamId())
+                    .map(teamId -> findTeamById(teamId, HOME_TEAM_NOT_FOUND_LOG))
+                    .ifPresent(entity::setHomeTeam);
+                Optional.ofNullable(dto.getAwayTeamId())
+                    .map(teamId -> findTeamById(teamId, AWAY_TEAM_NOT_FOUND_LOG))
+                    .ifPresent(entity::setAwayTeam);
+
                 Match saved = matchRepository.save(entity);
                 cache.clear();
                 LOG.info("Match created with id={}", saved.getId());
@@ -244,7 +201,7 @@ public class MatchService {
                 failedMatches.put(key, failureMessage);
                 LOG.warn("Skipping failed match in non-transactional bulk {}: {}", key, failureMessage);
             }
-        }
+        });
 
         if (!failedMatches.isEmpty()) {
             throw new IllegalStateException(
@@ -255,5 +212,21 @@ public class MatchService {
 
         LOG.info("Bulk match operation WITHOUT transaction completed size={}", result.size());
         return result;
+    }
+
+    private Tournament findTournamentById(Long tournamentId) {
+        return tournamentRepository.findById(tournamentId)
+            .orElseThrow(() -> {
+                LOG.warn(TOURNAMENT_NOT_FOUND_LOG, tournamentId);
+                return new NoSuchElementException(TOURNAMENT_NOT_FOUND + tournamentId);
+            });
+    }
+
+    private Team findTeamById(Long teamId, String notFoundLogTemplate) {
+        return teamRepository.findById(teamId)
+            .orElseThrow(() -> {
+                LOG.warn(notFoundLogTemplate, teamId);
+                return new NoSuchElementException(TEAM_NOT_FOUND + teamId);
+            });
     }
 }
