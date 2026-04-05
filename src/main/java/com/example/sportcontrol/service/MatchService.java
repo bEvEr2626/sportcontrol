@@ -136,6 +136,34 @@ public class MatchService {
     }
 
     @Transactional
+    public MatchDto patch(Long id, MatchDto dto) {
+        LOG.info("Patching match id={} with data {}", id, dto);
+        Match existing = matchRepository.findById(id)
+            .orElseThrow(() -> {
+                LOG.warn("Match not found for patch: {}", id);
+                return new NoSuchElementException("Match not found: " + id);
+            });
+
+        Optional.ofNullable(dto.getName()).ifPresent(existing::setName);
+        Optional.ofNullable(dto.getLocation()).ifPresent(existing::setLocation);
+        Optional.ofNullable(dto.getDate()).ifPresent(existing::setDate);
+        Optional.ofNullable(dto.getTournamentId())
+            .map(this::findTournamentById)
+            .ifPresent(existing::setTournament);
+        Optional.ofNullable(dto.getHomeTeamId())
+            .map(teamId -> findTeamById(teamId, HOME_TEAM_NOT_FOUND_LOG))
+            .ifPresent(existing::setHomeTeam);
+        Optional.ofNullable(dto.getAwayTeamId())
+            .map(teamId -> findTeamById(teamId, AWAY_TEAM_NOT_FOUND_LOG))
+            .ifPresent(existing::setAwayTeam);
+
+        Match saved = matchRepository.save(existing);
+        cache.clear();
+        LOG.info("Match patched with id={}", saved.getId());
+        return matchMapper.toDto(saved);
+    }
+
+    @Transactional
     public void delete(Long id) {
         LOG.info("Deleting match with id={}", id);
         matchRepository.deleteById(id);

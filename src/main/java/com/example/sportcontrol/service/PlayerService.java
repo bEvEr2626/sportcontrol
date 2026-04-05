@@ -48,7 +48,7 @@ public class PlayerService {
         LOG.info("Creating player: {}", dto);
         Optional.ofNullable(dto.getTeamId())
             .flatMap(teamId -> Optional.ofNullable(dto.getName())
-                .map(name -> playerRepository.findByNameAndTeam_Id(name, teamId)))
+                .flatMap(name -> playerRepository.findByNameAndTeam_Id(name, teamId)))
             .ifPresent(existing -> {
                 LOG.warn("Player with name '{}' already exists in team {}", dto.getName(), dto.getTeamId());
                 throw new org.springframework.dao.DataIntegrityViolationException("Player with this name already exists in the team");

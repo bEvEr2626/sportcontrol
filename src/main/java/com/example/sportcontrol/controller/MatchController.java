@@ -23,8 +23,8 @@ public class MatchController {
     private final MatchService matchService;
 
     @PatchMapping("/{id:\\d+}")
-    public MatchDto patch(@PathVariable Long id, @RequestBody @Valid MatchDto dto) {
-        return matchService.update(id, dto);
+    public MatchDto patch(@PathVariable Long id, @RequestBody MatchDto dto) {
+        return matchService.patch(id, dto);
     }
 
     @GetMapping
