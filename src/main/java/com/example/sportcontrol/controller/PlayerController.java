@@ -1,6 +1,8 @@
 
 package com.example.sportcontrol.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.PatchMapping;
 
 import org.springframework.data.domain.Page;
@@ -24,16 +26,19 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/players")
 @RequiredArgsConstructor
+@Tag(name = "Players", description = "Operations for managing players")
 public class PlayerController {
 
     private final PlayerService playerService;
 
     @PatchMapping("/{id}")
+    @Operation(summary = "Patch player", description = "Partially updates an existing player by ID")
     public PlayerDto patch(@PathVariable Long id, @RequestBody @Valid PlayerDto dto) {
         return playerService.update(id, dto);
     }
 
     @GetMapping
+    @Operation(summary = "Get players", description = "Returns a paginated list of players")
     public Page<PlayerDto> getAll(
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size
@@ -43,21 +48,25 @@ public class PlayerController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get player by ID", description = "Returns a player by ID")
     public PlayerDto getById(@PathVariable Long id) {
         return playerService.getById(id);
     }
 
     @PostMapping
+    @Operation(summary = "Create player", description = "Creates a new player")
     public PlayerDto create(@RequestBody @Valid PlayerDto dto) {
         return playerService.create(dto);
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Update player", description = "Fully updates an existing player by ID")
     public PlayerDto update(@PathVariable Long id, @RequestBody @Valid PlayerDto dto) {
         return playerService.update(id, dto);
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete player", description = "Deletes a player by ID")
     public void delete(@PathVariable Long id) {
         playerService.delete(id);
     }
