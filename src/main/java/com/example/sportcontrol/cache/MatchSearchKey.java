@@ -1,4 +1,4 @@
-package com.example.sportcontrol.service;
+package com.example.sportcontrol.cache;
 
 import com.example.sportcontrol.dto.MatchFilter;
 

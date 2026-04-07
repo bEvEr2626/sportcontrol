@@ -1,5 +1,6 @@
 package com.example.sportcontrol.service;
 
+import com.example.sportcontrol.cache.MatchSearchKey;
 import com.example.sportcontrol.dto.MatchDto;
 import com.example.sportcontrol.dto.MatchFilter;
 import com.example.sportcontrol.entity.Match;
