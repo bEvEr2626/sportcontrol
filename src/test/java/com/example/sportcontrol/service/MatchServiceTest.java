@@ -161,6 +161,24 @@ class MatchServiceTest {
     }
 
     @Test
+    void createThrowsWhenAwayTeamNotFound() {
+        MatchDto input = buildMatchDto(null);
+        Match mapped = new Match();
+        Tournament tournament = new Tournament();
+        Team homeTeam = new Team();
+
+        when(matchMapper.toEntity(input)).thenReturn(mapped);
+        when(tournamentRepository.findById(2L)).thenReturn(Optional.of(tournament));
+        when(teamRepository.findById(3L)).thenReturn(Optional.of(homeTeam));
+        when(teamRepository.findById(4L)).thenReturn(Optional.empty());
+
+        NoSuchElementException exception = assertThrows(NoSuchElementException.class, () -> service.create(input));
+
+        assertEquals("Team not found: 4", exception.getMessage());
+        verify(matchRepository, never()).save(any());
+    }
+
+    @Test
     void updateUpdatesExistingMatchAndRelations() {
         MatchDto input = buildMatchDto(null);
         Match existing = new Match();
@@ -230,6 +248,41 @@ class MatchServiceTest {
     }
 
     @Test
+    void patchThrowsWhenMatchNotFound() {
+        when(matchRepository.findById(999L)).thenReturn(Optional.empty());
+        MatchDto emptyPatch = new MatchDto();
+
+        NoSuchElementException exception = assertThrows(
+            NoSuchElementException.class,
+            () -> service.patch(999L, emptyPatch)
+        );
+
+        assertEquals("Match not found: 999", exception.getMessage());
+    }
+
+    @Test
+    void patchUpdatesAwayTeamWhenProvided() {
+        Match existing = new Match();
+        MatchDto patch = new MatchDto();
+        patch.setAwayTeamId(4L);
+
+        Team awayTeam = new Team();
+        Match saved = new Match();
+        saved.setId(12L);
+        MatchDto savedDto = buildMatchDto(12L);
+
+        when(matchRepository.findById(12L)).thenReturn(Optional.of(existing));
+        when(teamRepository.findById(4L)).thenReturn(Optional.of(awayTeam));
+        when(matchRepository.save(existing)).thenReturn(saved);
+        when(matchMapper.toDto(saved)).thenReturn(savedDto);
+
+        MatchDto result = service.patch(12L, patch);
+
+        assertEquals(savedDto, result);
+        assertEquals(awayTeam, existing.getAwayTeam());
+    }
+
+    @Test
     void deleteCallsRepositoryDeleteById() {
         service.delete(11L);
 
@@ -292,6 +345,7 @@ class MatchServiceTest {
     @Test
     void bulkCreateTransactionalThrowsWhenListIsEmpty() {
         List<MatchDto> emptyList = List.of();
+
         IllegalArgumentException exception = assertThrows(
             IllegalArgumentException.class,
             () -> service.bulkCreateTransactional(emptyList)
@@ -371,10 +425,57 @@ class MatchServiceTest {
     }
 
     @Test
+    void bulkCreateNoTransactionalUsesExceptionClassNameWhenMessageIsNull() {
+        MatchDto firstInput = buildMatchDto(null);
+        MatchDto secondInput = buildMatchDto(null);
+        secondInput.setName("Broken Match Without Message");
+        List<MatchDto> input = List.of(firstInput, secondInput);
+
+        Match firstMapped = new Match();
+        Match secondMapped = new Match();
+        Match firstSaved = new Match();
+        firstSaved.setId(41L);
+        MatchDto firstSavedDto = buildMatchDto(41L);
+
+        Tournament tournament = new Tournament();
+        Team homeTeam = new Team();
+        Team awayTeam = new Team();
+
+        when(matchMapper.toEntity(firstInput)).thenReturn(firstMapped);
+        when(matchMapper.toEntity(secondInput)).thenReturn(secondMapped);
+        when(tournamentRepository.findById(2L)).thenReturn(Optional.of(tournament));
+        when(teamRepository.findById(3L)).thenReturn(Optional.of(homeTeam));
+        when(teamRepository.findById(4L)).thenReturn(Optional.of(awayTeam));
+        when(matchRepository.save(any(Match.class))).thenReturn(firstSaved).thenThrow(new RuntimeException());
+        when(matchMapper.toDto(firstSaved)).thenReturn(firstSavedDto);
+
+        IllegalStateException exception = assertThrows(
+            IllegalStateException.class,
+            () -> service.bulkCreateNoTransactional(input)
+        );
+
+        assertEquals(
+            "Some matches were not saved. successCount=1, failedCount=1, failedMatches={match_2=RuntimeException}",
+            exception.getMessage()
+        );
+    }
+
+    @Test
     void bulkCreateNoTransactionalThrowsWhenListIsNull() {
         IllegalArgumentException exception = assertThrows(
             IllegalArgumentException.class,
             () -> service.bulkCreateNoTransactional(null)
+        );
+
+        assertEquals("Matches list cannot be empty", exception.getMessage());
+    }
+
+    @Test
+    void bulkCreateNoTransactionalThrowsWhenListIsEmpty() {
+        List<MatchDto> emptyList = List.of();
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> service.bulkCreateNoTransactional(emptyList)
         );
 
         assertEquals("Matches list cannot be empty", exception.getMessage());
