@@ -35,6 +35,7 @@ public class MatchService {
 
     private static final Logger LOG = LoggerFactory.getLogger(MatchService.class);
 
+    private static final String MATCH_NOT_FOUND = "Match not found: ";
     private static final String TEAM_NOT_FOUND = "Team not found: ";
     private static final String TOURNAMENT_NOT_FOUND = "Tournament not found: ";
     private static final String TOURNAMENT_NOT_FOUND_LOG = "Tournament not found: {}";
@@ -87,7 +88,7 @@ public class MatchService {
             .map(matchMapper::toDto)
             .orElseThrow(() -> {
                 LOG.warn("Match not found: {}", id);
-                return new NoSuchElementException("Match not found: " + id);
+                return new NoSuchElementException(MATCH_NOT_FOUND + id);
             });
     }
 
@@ -116,7 +117,7 @@ public class MatchService {
         Match existing = matchRepository.findById(id)
             .orElseThrow(() -> {
                 LOG.warn("Match not found for update: {}", id);
-                return new NoSuchElementException("Match not found: " + id);
+                return new NoSuchElementException(MATCH_NOT_FOUND + id);
             });
         existing.setName(dto.getName());
         existing.setLocation(dto.getLocation());
@@ -142,7 +143,7 @@ public class MatchService {
         Match existing = matchRepository.findById(id)
             .orElseThrow(() -> {
                 LOG.warn("Match not found for patch: {}", id);
-                return new NoSuchElementException("Match not found: " + id);
+                return new NoSuchElementException(MATCH_NOT_FOUND + id);
             });
 
         Optional.ofNullable(dto.getName()).ifPresent(existing::setName);
