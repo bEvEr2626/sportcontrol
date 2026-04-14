@@ -28,6 +28,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.transaction.TransactionSystemException;
 import org.springframework.transaction.UnexpectedRollbackException;
@@ -185,6 +186,25 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void handleHandlerMethodValidationReturnsBadRequest() {
+        HandlerMethodValidationException exception = org.mockito.Mockito.mock(HandlerMethodValidationException.class);
+        when(exception.getMessage()).thenReturn("validation failed in handler");
+
+        ResponseEntity<ErrorResponseDto> response = handler.handleHandlerMethodValidation(exception, request);
+
+        assertBaseResponse(response, HttpStatus.BAD_REQUEST, "Validation failed");
+    }
+
+    @Test
+    void handleTransactionSystemExceptionUsesFallbackMessageWhenRootCauseMessageIsNull() {
+        Exception exception = new SelfCauseException();
+
+        ResponseEntity<ErrorResponseDto> response = handler.handleTransactionSystemException(exception, request);
+
+        assertBaseResponse(response, HttpStatus.BAD_REQUEST, "Transaction failed due to invalid data");
+    }
+
+    @Test
     void handleUnexpectedExceptionReturnsInternalServerError() {
         ResponseEntity<ErrorResponseDto> response =
             handler.handleUnexpectedException(new RuntimeException("boom"), request);
@@ -200,5 +220,12 @@ class GlobalExceptionHandlerTest {
         assertEquals(status.getReasonPhrase(), response.getBody().getError());
         assertEquals(message, response.getBody().getMessage());
         assertEquals("/api/test", response.getBody().getPath());
+    }
+
+    private static final class SelfCauseException extends Exception {
+        @Override
+        public synchronized Throwable getCause() {
+            return this;
+        }
     }
 }

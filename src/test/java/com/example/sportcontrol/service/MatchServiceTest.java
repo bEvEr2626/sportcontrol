@@ -28,6 +28,7 @@ import com.example.sportcontrol.repository.MatchRepository;
 import com.example.sportcontrol.repository.TeamRepository;
 import com.example.sportcontrol.repository.TournamentRepository;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -388,6 +389,23 @@ class MatchServiceTest {
 
         assertEquals(
             "Invalid matches in transactional bulk: {match_2=name: must not be blank}",
+            exception.getMessage()
+        );
+        verify(matchRepository, never()).save(any(Match.class));
+    }
+
+    @Test
+    void bulkCreateTransactionalThrowsWhenAnyRecordIsNullAndSavesNothing() {
+        MatchDto validInput = buildMatchDto(null);
+        List<MatchDto> matches = Arrays.asList(validInput, null);
+
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> service.bulkCreateTransactional(matches)
+        );
+
+        assertEquals(
+            "Invalid matches in transactional bulk: {match_2=Match payload must not be null}",
             exception.getMessage()
         );
         verify(matchRepository, never()).save(any(Match.class));

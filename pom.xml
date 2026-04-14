@@ -35,6 +35,13 @@
     	<sonar.coverage.jacoco.xmlReportPaths>
         	target/site/jacoco/jacoco.xml
     	</sonar.coverage.jacoco.xmlReportPaths>
+		<sonar.coverage.exclusions>
+			src/main/java/com/example/sportcontrol/dto/**,
+			src/main/java/com/example/sportcontrol/entity/**,
+			src/main/java/com/example/sportcontrol/mapper/**,
+			src/main/java/com/example/sportcontrol/cache/**,
+			src/main/java/com/example/sportcontrol/SportcontrolApplication.java
+		</sonar.coverage.exclusions>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -193,6 +200,15 @@
 					<goals>
 						<goal>report</goal>
 					</goals>
+					<configuration>
+						<excludes>
+							<exclude>com/example/sportcontrol/dto/*</exclude>
+							<exclude>com/example/sportcontrol/entity/*</exclude>
+							<exclude>com/example/sportcontrol/mapper/*</exclude>
+							<exclude>com/example/sportcontrol/cache/*</exclude>
+							<exclude>com/example/sportcontrol/SportcontrolApplication</exclude>
+						</excludes>
+					</configuration>
 				</execution>
 				<execution>
 					<id>check</id>
@@ -203,12 +219,19 @@
 					<configuration>
 						<rules>
 							<rule>
-								<element>BUNDLE</element>
+								<element>PACKAGE</element>
+								<includes>
+									<include>com.example.sportcontrol.service</include>
+									<include>com.example.sportcontrol.controller</include>
+									<include>com.example.sportcontrol.exception</include>
+									<include>com.example.sportcontrol.aspect</include>
+									<include>com.example.sportcontrol.config</include>
+								</includes>
 								<limits>
 									<limit>
 										<counter>LINE</counter>
 										<value>COVEREDRATIO</value>
-										<minimum>0.50</minimum>
+										<minimum>1.00</minimum>
 									</limit>
 								</limits>
 							</rule>
