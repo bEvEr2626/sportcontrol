@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -14,6 +15,9 @@ import com.example.sportcontrol.dto.MatchFilter;
 import com.example.sportcontrol.entity.Match;
 import com.example.sportcontrol.entity.Team;
 import com.example.sportcontrol.entity.Tournament;
+import com.example.sportcontrol.exception.BulkOperationException;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -24,9 +28,11 @@ import com.example.sportcontrol.repository.MatchRepository;
 import com.example.sportcontrol.repository.TeamRepository;
 import com.example.sportcontrol.repository.TournamentRepository;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
@@ -48,6 +54,9 @@ class MatchServiceTest {
     @Mock
     private MatchMapper matchMapper;
 
+    @Mock
+    private Validator validator;
+
     @InjectMocks
     private MatchService service;
 
@@ -57,6 +66,7 @@ class MatchServiceTest {
     void setUp() {
         filter = new MatchFilter();
         filter.setName("Cup Final");
+        lenient().when(validator.validate(any(MatchDto.class))).thenReturn(Collections.emptySet());
     }
 
     @Test
@@ -355,6 +365,35 @@ class MatchServiceTest {
     }
 
     @Test
+    void bulkCreateTransactionalThrowsWhenAnyRecordIsInvalidAndSavesNothing() {
+        MatchDto firstInput = buildMatchDto(null);
+        MatchDto invalidInput = buildMatchDto(null);
+        invalidInput.setName("");
+
+        @SuppressWarnings("unchecked")
+        ConstraintViolation<MatchDto> violation = (ConstraintViolation<MatchDto>) org.mockito.Mockito.mock(ConstraintViolation.class);
+        when(violation.getPropertyPath()).thenReturn(org.mockito.Mockito.mock(jakarta.validation.Path.class));
+        when(violation.getMessage()).thenReturn("must not be blank");
+        when(violation.getPropertyPath().toString()).thenReturn("name");
+
+        when(validator.validate(firstInput)).thenReturn(Collections.emptySet());
+        when(validator.validate(invalidInput)).thenReturn(Set.of(violation));
+
+        List<MatchDto> matches = List.of(firstInput, invalidInput);
+
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> service.bulkCreateTransactional(matches)
+        );
+
+        assertEquals(
+            "Invalid matches in transactional bulk: {match_2=name: must not be blank}",
+            exception.getMessage()
+        );
+        verify(matchRepository, never()).save(any(Match.class));
+    }
+
+    @Test
     void bulkCreateNoTransactionalCreatesAllWhenNoErrors() {
         MatchDto firstInput = buildMatchDto(null);
         MatchDto secondInput = buildMatchDto(null);
@@ -413,8 +452,8 @@ class MatchServiceTest {
         when(matchRepository.save(any(Match.class))).thenReturn(firstSaved).thenThrow(new RuntimeException("db error"));
         when(matchMapper.toDto(firstSaved)).thenReturn(firstSavedDto);
 
-        IllegalStateException exception = assertThrows(
-            IllegalStateException.class,
+        BulkOperationException exception = assertThrows(
+            BulkOperationException.class,
             () -> service.bulkCreateNoTransactional(input)
         );
 
@@ -422,6 +461,8 @@ class MatchServiceTest {
             "Some matches were not saved. successCount=1, failedCount=1, failedMatches={match_2=db error}",
             exception.getMessage()
         );
+        assertEquals(1, exception.getSuccessCount());
+        assertEquals("db error", exception.getFailedItems().get("match_2"));
     }
 
     @Test
@@ -449,8 +490,8 @@ class MatchServiceTest {
         when(matchRepository.save(any(Match.class))).thenReturn(firstSaved).thenThrow(new RuntimeException());
         when(matchMapper.toDto(firstSaved)).thenReturn(firstSavedDto);
 
-        IllegalStateException exception = assertThrows(
-            IllegalStateException.class,
+        BulkOperationException exception = assertThrows(
+            BulkOperationException.class,
             () -> service.bulkCreateNoTransactional(input)
         );
 
@@ -458,6 +499,50 @@ class MatchServiceTest {
             "Some matches were not saved. successCount=1, failedCount=1, failedMatches={match_2=RuntimeException}",
             exception.getMessage()
         );
+        assertEquals(1, exception.getSuccessCount());
+        assertEquals("RuntimeException", exception.getFailedItems().get("match_2"));
+    }
+
+    @Test
+    void bulkCreateNoTransactionalReportsBeanValidationErrorsAndSavesValidRows() {
+        MatchDto firstInput = buildMatchDto(null);
+        MatchDto invalidInput = buildMatchDto(null);
+        invalidInput.setName("");
+        List<MatchDto> input = List.of(firstInput, invalidInput);
+
+        Match mapped = new Match();
+        Match saved = new Match();
+        saved.setId(51L);
+        MatchDto savedDto = buildMatchDto(51L);
+
+        Tournament tournament = new Tournament();
+        Team homeTeam = new Team();
+        Team awayTeam = new Team();
+
+        @SuppressWarnings("unchecked")
+        ConstraintViolation<MatchDto> violation = (ConstraintViolation<MatchDto>) org.mockito.Mockito.mock(ConstraintViolation.class);
+        when(violation.getPropertyPath()).thenReturn(org.mockito.Mockito.mock(jakarta.validation.Path.class));
+        when(violation.getMessage()).thenReturn("must not be blank");
+        when(violation.getPropertyPath().toString()).thenReturn("name");
+
+        when(validator.validate(firstInput)).thenReturn(Collections.emptySet());
+        when(validator.validate(invalidInput)).thenReturn(Set.of(violation));
+
+        when(matchMapper.toEntity(firstInput)).thenReturn(mapped);
+        when(tournamentRepository.findById(2L)).thenReturn(Optional.of(tournament));
+        when(teamRepository.findById(3L)).thenReturn(Optional.of(homeTeam));
+        when(teamRepository.findById(4L)).thenReturn(Optional.of(awayTeam));
+        when(matchRepository.save(any(Match.class))).thenReturn(saved);
+        when(matchMapper.toDto(saved)).thenReturn(savedDto);
+
+        BulkOperationException exception = assertThrows(
+            BulkOperationException.class,
+            () -> service.bulkCreateNoTransactional(input)
+        );
+
+        assertEquals(1, exception.getSuccessCount());
+        assertEquals("name: must not be blank", exception.getFailedItems().get("match_2"));
+        verify(matchRepository, times(1)).save(any(Match.class));
     }
 
     @Test

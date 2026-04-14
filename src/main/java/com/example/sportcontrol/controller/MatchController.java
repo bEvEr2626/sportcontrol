@@ -82,7 +82,7 @@ public class MatchController {
     @PostMapping("/bulk")
     @Operation(summary = "Bulk create matches", description = "Creates multiple matches without wrapping in a single transaction")
     public ResponseEntity<List<MatchDto>> bulkCreate(
-        @RequestBody @Valid List<MatchDto> matches) {
+        @RequestBody List<MatchDto> matches) {
         return ResponseEntity.ok(matchService.bulkCreateNoTransactional(matches));
     }
 

@@ -1,6 +1,7 @@
 package com.example.sportcontrol.exception;
 
 import com.example.sportcontrol.dto.ErrorResponseDto;
+import jakarta.persistence.PersistenceException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -9,10 +10,16 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.jpa.JpaSystemException;
+import org.springframework.transaction.TransactionException;
+import org.springframework.transaction.TransactionSystemException;
+import org.springframework.transaction.UnexpectedRollbackException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
@@ -83,6 +90,15 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, VALIDATION_FAILED_MESSAGE, request, errors);
     }
 
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ErrorResponseDto> handleHandlerMethodValidation(
+        HandlerMethodValidationException ex,
+        HttpServletRequest request
+    ) {
+        LOG.warn("Handler method validation failed on path={} message={}", request.getRequestURI(), ex.getMessage());
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, VALIDATION_FAILED_MESSAGE, request, null);
+    }
+
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponseDto> handleConstraintViolation(
         ConstraintViolationException ex,
@@ -94,6 +110,46 @@ public class GlobalExceptionHandler {
         );
         LOG.warn("Constraint violation on path={} errors={}", request.getRequestURI(), errors);
         return buildErrorResponse(HttpStatus.BAD_REQUEST, VALIDATION_FAILED_MESSAGE, request, errors);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponseDto> handleMessageNotReadable(
+        HttpMessageNotReadableException ex,
+        HttpServletRequest request
+    ) {
+        String message = "Invalid request body format";
+        LOG.warn("Malformed request body on path={} message={}", request.getRequestURI(), ex.getMessage());
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, message, request, null);
+    }
+
+    @ExceptionHandler({
+        TransactionSystemException.class,
+        UnexpectedRollbackException.class,
+        TransactionException.class,
+        JpaSystemException.class,
+        PersistenceException.class
+    })
+    public ResponseEntity<ErrorResponseDto> handleTransactionSystemException(
+        Exception ex,
+        HttpServletRequest request
+    ) {
+        Throwable rootCause = findRootCause(ex);
+        String message = rootCause.getMessage() == null
+            ? "Transaction failed due to invalid data"
+            : rootCause.getMessage();
+        LOG.warn("Transactional error on path={} message={}", request.getRequestURI(), message);
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, message, request, null);
+    }
+
+    @ExceptionHandler(BulkOperationException.class)
+    public ResponseEntity<ErrorResponseDto> handleBulkOperation(
+        BulkOperationException ex,
+        HttpServletRequest request
+    ) {
+        String message = "Some matches were not saved. successCount=%d, failedCount=%d"
+            .formatted(ex.getSuccessCount(), ex.getFailedItems().size());
+        LOG.warn("Bulk operation partially failed on path={} errors={}", request.getRequestURI(), ex.getFailedItems());
+        return buildErrorResponse(HttpStatus.UNPROCESSABLE_CONTENT, message, request, ex.getFailedItems());
     }
 
     @ExceptionHandler(Exception.class)
@@ -118,5 +174,13 @@ public class GlobalExceptionHandler {
             validationErrors
         );
         return ResponseEntity.status(status).body(response);
+    }
+
+    private Throwable findRootCause(Throwable throwable) {
+        Throwable root = throwable;
+        while (root.getCause() != null && root.getCause() != root) {
+            root = root.getCause();
+        }
+        return root;
     }
 }

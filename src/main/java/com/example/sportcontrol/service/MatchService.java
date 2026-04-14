@@ -6,6 +6,9 @@ import com.example.sportcontrol.dto.MatchFilter;
 import com.example.sportcontrol.entity.Match;
 import com.example.sportcontrol.entity.Team;
 import com.example.sportcontrol.entity.Tournament;
+import com.example.sportcontrol.exception.BulkOperationException;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -27,7 +30,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.IntStream;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -46,6 +50,7 @@ public class MatchService {
     private final TournamentRepository tournamentRepository;
     private final TeamRepository teamRepository;
     private final MatchMapper matchMapper;
+    private final Validator validator;
 
     private final Map<MatchSearchKey, Page<MatchDto>> cache = new HashMap<>();
 
@@ -186,6 +191,30 @@ public class MatchService {
         List<MatchDto> safeMatches = Optional.ofNullable(matches)
             .filter(list -> !list.isEmpty())
             .orElseThrow(() -> new IllegalArgumentException("Matches list cannot be empty"));
+
+        Map<String, String> invalidMatches = new LinkedHashMap<>();
+        for (int index = 0; index < safeMatches.size(); index++) {
+            MatchDto dto = safeMatches.get(index);
+            String key = "match_%d".formatted(index + 1);
+
+            if (dto == null) {
+                invalidMatches.put(key, "Match payload must not be null");
+                continue;
+            }
+
+            Set<ConstraintViolation<MatchDto>> violations = validator.validate(dto);
+            if (!violations.isEmpty()) {
+                String failureMessage = violations.stream()
+                    .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
+                    .sorted()
+                    .collect(Collectors.joining("; "));
+                invalidMatches.put(key, failureMessage);
+            }
+        }
+
+        if (!invalidMatches.isEmpty()) {
+            throw new IllegalArgumentException("Invalid matches in transactional bulk: " + invalidMatches);
+        }
         
         List<MatchDto> result = safeMatches.stream()
             .map(this::create)
@@ -204,8 +233,21 @@ public class MatchService {
         List<MatchDto> result = new ArrayList<>();
         Map<String, String> failedMatches = new LinkedHashMap<>();
 
-        IntStream.range(0, safeMatches.size()).forEach(index -> {
+        for (int index = 0; index < safeMatches.size(); index++) {
             MatchDto dto = safeMatches.get(index);
+            String key = "match_%d".formatted(index + 1);
+
+            Set<ConstraintViolation<MatchDto>> violations = validator.validate(dto);
+            if (!violations.isEmpty()) {
+                String failureMessage = violations.stream()
+                    .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
+                    .sorted()
+                    .collect(Collectors.joining("; "));
+                failedMatches.put(key, failureMessage);
+                LOG.warn("Skipping invalid match in non-transactional bulk {}: {}", key, failureMessage);
+                continue;
+            }
+
             try {
                 LOG.info("Creating match: {}", dto);
                 Match entity = matchMapper.toEntity(dto);
@@ -224,19 +266,20 @@ public class MatchService {
                 LOG.info("Match created with id={}", saved.getId());
                 result.add(matchMapper.toDto(saved));
             } catch (RuntimeException ex) {
-                String key = "match_%d".formatted(index + 1);
                 String failureMessage = ex.getMessage() == null
                     ? ex.getClass().getSimpleName()
                     : ex.getMessage();
                 failedMatches.put(key, failureMessage);
                 LOG.warn("Skipping failed match in non-transactional bulk {}: {}", key, failureMessage);
             }
-        });
+        }
 
         if (!failedMatches.isEmpty()) {
-            throw new IllegalStateException(
+            throw new BulkOperationException(
                 "Some matches were not saved. successCount=%d, failedCount=%d, failedMatches=%s"
-                    .formatted(result.size(), failedMatches.size(), failedMatches)
+                    .formatted(result.size(), failedMatches.size(), failedMatches),
+                result.size(),
+                failedMatches
             );
         }
 

@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Path;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -25,7 +26,12 @@ import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.http.HttpInputMessage;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.transaction.TransactionSystemException;
+import org.springframework.transaction.UnexpectedRollbackException;
+import jakarta.persistence.PersistenceException;
 
 @ExtendWith(MockitoExtension.class)
 class GlobalExceptionHandlerTest {
@@ -119,6 +125,63 @@ class GlobalExceptionHandlerTest {
         assertBaseResponse(response, HttpStatus.BAD_REQUEST, "Validation failed");
         assertNotNull(response.getBody());
         assertEquals(Map.of("teamId", "must not be null"), response.getBody().getValidationErrors());
+    }
+
+    @Test
+    void handleBulkOperationReturnsUnprocessableEntityWithFailedItems() {
+        Map<String, String> failed = new LinkedHashMap<>();
+        failed.put("match_2", "name: must not be blank");
+
+        BulkOperationException exception =
+            new BulkOperationException("partial failure", 1, failed);
+
+        ResponseEntity<ErrorResponseDto> response = handler.handleBulkOperation(exception, request);
+
+        assertBaseResponse(response, HttpStatus.UNPROCESSABLE_CONTENT,
+            "Some matches were not saved. successCount=1, failedCount=1");
+        assertNotNull(response.getBody());
+        assertEquals(failed, response.getBody().getValidationErrors());
+    }
+
+    @Test
+    void handleMessageNotReadableReturnsBadRequest() {
+        HttpInputMessage inputMessage = org.mockito.Mockito.mock(HttpInputMessage.class);
+        HttpMessageNotReadableException exception =
+            new HttpMessageNotReadableException("JSON parse error", inputMessage);
+
+        ResponseEntity<ErrorResponseDto> response = handler.handleMessageNotReadable(exception, request);
+
+        assertBaseResponse(response, HttpStatus.BAD_REQUEST, "Invalid request body format");
+    }
+
+    @Test
+    void handleTransactionSystemExceptionReturnsBadRequest() {
+        TransactionSystemException exception =
+            new TransactionSystemException("transaction failed", new RuntimeException("not-null property references a null value"));
+
+        ResponseEntity<ErrorResponseDto> response = handler.handleTransactionSystemException(exception, request);
+
+        assertBaseResponse(response, HttpStatus.BAD_REQUEST, "not-null property references a null value");
+    }
+
+    @Test
+    void handleUnexpectedRollbackExceptionReturnsBadRequest() {
+        UnexpectedRollbackException exception =
+            new UnexpectedRollbackException("transaction rolled back due to invalid state");
+
+        ResponseEntity<ErrorResponseDto> response = handler.handleTransactionSystemException(exception, request);
+
+        assertBaseResponse(response, HttpStatus.BAD_REQUEST, "transaction rolled back due to invalid state");
+    }
+
+    @Test
+    void handlePersistenceExceptionReturnsBadRequestWithRootCause() {
+        PersistenceException exception =
+            new PersistenceException("persistence failed", new RuntimeException("constraint violation at flush"));
+
+        ResponseEntity<ErrorResponseDto> response = handler.handleTransactionSystemException(exception, request);
+
+        assertBaseResponse(response, HttpStatus.BAD_REQUEST, "constraint violation at flush");
     }
 
     @Test
