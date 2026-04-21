@@ -5,9 +5,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.PatchMapping;
 
+import com.example.sportcontrol.dto.AsyncTaskAcceptedResponseDto;
+import com.example.sportcontrol.dto.AsyncTaskStatusDto;
 import com.example.sportcontrol.dto.MatchDto;
 import jakarta.validation.Valid;
 import com.example.sportcontrol.dto.MatchFilter;
+import com.example.sportcontrol.service.MatchAsyncTaskService;
 import com.example.sportcontrol.service.MatchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +27,7 @@ import java.util.List;
 public class MatchController {
 
     private final MatchService matchService;
+    private final MatchAsyncTaskService matchAsyncTaskService;
 
     @PatchMapping("/{id:\\d+}")
     @Operation(summary = "Patch match", description = "Partially updates an existing match by ID")
@@ -91,5 +95,21 @@ public class MatchController {
     public ResponseEntity<List<MatchDto>> bulkCreateTransactional(
         @RequestBody @Valid List<MatchDto> matches) {
         return ResponseEntity.ok(matchService.bulkCreateTransactional(matches));
+    }
+
+    @PostMapping("/bulk/async")
+    @Operation(
+        summary = "Start async bulk create",
+        description = "Starts asynchronous transactional bulk creation and returns task ID"
+    )
+    public ResponseEntity<AsyncTaskAcceptedResponseDto> bulkCreateAsync(
+        @RequestBody List<MatchDto> matches) {
+        return ResponseEntity.accepted().body(matchAsyncTaskService.startBulkCreateTask(matches));
+    }
+
+    @GetMapping("/tasks/{taskId}")
+    @Operation(summary = "Get async task status", description = "Returns status of asynchronous bulk creation task")
+    public ResponseEntity<AsyncTaskStatusDto> getTaskStatus(@PathVariable String taskId) {
+        return ResponseEntity.ok(matchAsyncTaskService.getTaskStatus(taskId));
     }
 }

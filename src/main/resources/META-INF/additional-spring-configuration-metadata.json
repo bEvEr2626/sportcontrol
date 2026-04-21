@@ -1,0 +1,10 @@
+{
+  "properties": [
+    {
+      "name": "app.async.match-demo-delay-ms",
+      "type": "java.lang.Long",
+      "defaultValue": 0,
+      "description": "Demonstration delay in milliseconds before processing async bulk match task."
+    }
+  ]
+}

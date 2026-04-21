@@ -6,17 +6,21 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.example.sportcontrol.dto.AsyncTaskAcceptedResponseDto;
+import com.example.sportcontrol.dto.AsyncTaskStatusDto;
 import com.example.sportcontrol.dto.MatchDto;
 import com.example.sportcontrol.dto.MatchFilter;
 import com.example.sportcontrol.dto.PlayerDto;
 import com.example.sportcontrol.dto.SportDto;
 import com.example.sportcontrol.dto.TeamDto;
 import com.example.sportcontrol.dto.TournamentDto;
+import com.example.sportcontrol.service.MatchAsyncTaskService;
 import com.example.sportcontrol.service.MatchService;
 import com.example.sportcontrol.service.PlayerService;
 import com.example.sportcontrol.service.SportService;
 import com.example.sportcontrol.service.TeamService;
 import com.example.sportcontrol.service.TournamentService;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,6 +45,8 @@ class ControllerDelegationTest {
     private PlayerService playerService;
     @Mock
     private MatchService matchService;
+    @Mock
+    private MatchAsyncTaskService matchAsyncTaskService;
 
     @InjectMocks
     private SportController sportController;
@@ -167,6 +173,16 @@ class ControllerDelegationTest {
         dto.setName("Final");
         Page<MatchDto> page = new PageImpl<>(List.of(dto), PageRequest.of(0, 10), 1);
         List<MatchDto> bulk = List.of(dto);
+        AsyncTaskAcceptedResponseDto acceptedResponse = new AsyncTaskAcceptedResponseDto("task-1");
+        AsyncTaskStatusDto statusResponse = new AsyncTaskStatusDto(
+            "task-1",
+            "RUNNING",
+            LocalDateTime.now(),
+            LocalDateTime.now(),
+            null,
+            null,
+            null
+        );
 
         when(matchService.findMatches(new MatchFilter(), 1, 20)).thenReturn(page);
         when(matchService.getById(15L)).thenReturn(dto);
@@ -177,6 +193,8 @@ class ControllerDelegationTest {
         when(matchService.findMatches(new MatchFilter(), 2, 3)).thenReturn(page);
         when(matchService.bulkCreateNoTransactional(bulk)).thenReturn(bulk);
         when(matchService.bulkCreateTransactional(bulk)).thenReturn(bulk);
+        when(matchAsyncTaskService.startBulkCreateTask(bulk)).thenReturn(acceptedResponse);
+        when(matchAsyncTaskService.getTaskStatus("task-1")).thenReturn(statusResponse);
 
         assertSame(page, matchController.getAll(1, 20));
         assertSame(dto, matchController.getById(15L));
@@ -188,11 +206,15 @@ class ControllerDelegationTest {
         ResponseEntity<Page<MatchDto>> jpqlResult = matchController.search(new MatchFilter(), "jpql", PageRequest.of(2, 3));
         ResponseEntity<List<MatchDto>> bulkResult = matchController.bulkCreate(bulk);
         ResponseEntity<List<MatchDto>> bulkTxResult = matchController.bulkCreateTransactional(bulk);
+        ResponseEntity<AsyncTaskAcceptedResponseDto> asyncAcceptedResult = matchController.bulkCreateAsync(bulk);
+        ResponseEntity<AsyncTaskStatusDto> statusResult = matchController.getTaskStatus("task-1");
 
         assertSame(page, nativeResult.getBody());
         assertSame(page, jpqlResult.getBody());
         assertSame(bulk, bulkResult.getBody());
         assertSame(bulk, bulkTxResult.getBody());
+        assertSame(acceptedResponse, asyncAcceptedResult.getBody());
+        assertSame(statusResponse, statusResult.getBody());
 
         matchController.delete(15L);
 
@@ -205,6 +227,8 @@ class ControllerDelegationTest {
         verify(matchService).findMatches(new MatchFilter(), 2, 3);
         verify(matchService).bulkCreateNoTransactional(bulk);
         verify(matchService).bulkCreateTransactional(bulk);
+        verify(matchAsyncTaskService).startBulkCreateTask(bulk);
+        verify(matchAsyncTaskService).getTaskStatus("task-1");
         verify(matchService).delete(15L);
     }
 }

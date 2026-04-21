@@ -1,5 +1,6 @@
 package com.example.sportcontrol.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -14,6 +15,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class MatchDto {
 
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     @Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "Match ID (generated automatically)", example = "1")
     private Long id;
 
@@ -34,20 +36,23 @@ public class MatchDto {
     @Schema(description = "Tournament ID", example = "2")
     private Long tournamentId;
 
-    @Schema(description = "Tournament name", example = "Russian Cup")
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "Tournament name", example = "Russian Cup")
     private String tournamentName;
 
     @NotNull
     @Schema(description = "Home team ID", example = "10")
     private Long homeTeamId;
 
-    @Schema(description = "Home team name", example = "Spartak")
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "Home team name", example = "Spartak")
     private String homeTeamName;
 
     @NotNull
     @Schema(description = "Away team ID", example = "11")
     private Long awayTeamId;
 
-    @Schema(description = "Away team name", example = "Zenit")
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "Away team name", example = "Zenit")
     private String awayTeamName;
 }
