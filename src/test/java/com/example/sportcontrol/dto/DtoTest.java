@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
@@ -67,6 +68,20 @@ class DtoTest {
         assertEquals(tournamentLeft, tournamentRight);
         assertEquals(tournamentLeft.hashCode(), tournamentRight.hashCode());
         assertTrue(tournamentLeft.toString().contains("Russian Cup"));
+
+        TournamentWithMatchesDto tournamentWithMatchesLeft = new TournamentWithMatchesDto();
+        tournamentWithMatchesLeft.setTournamentName("Cup 2026");
+        tournamentWithMatchesLeft.setSportId(1L);
+        tournamentWithMatchesLeft.setMatches(List.of(new MatchDto()));
+
+        TournamentWithMatchesDto tournamentWithMatchesRight = new TournamentWithMatchesDto();
+        tournamentWithMatchesRight.setTournamentName("Cup 2026");
+        tournamentWithMatchesRight.setSportId(1L);
+        tournamentWithMatchesRight.setMatches(List.of(new MatchDto()));
+
+        assertEquals(tournamentWithMatchesLeft, tournamentWithMatchesRight);
+        assertEquals(tournamentWithMatchesLeft.hashCode(), tournamentWithMatchesRight.hashCode());
+        assertTrue(tournamentWithMatchesLeft.toString().contains("Cup 2026"));
     }
 
     @Test
@@ -200,7 +215,7 @@ class DtoTest {
     }
 
     @Test
-    void dtoValidationRejectsInvalidValues() {
+    void simpleDtoValidationRejectsInvalidValues() {
         SportDto sportDto = new SportDto();
         sportDto.setName("A");
         assertTrue(violatedProperties(sportDto).contains("name"));
@@ -218,16 +233,15 @@ class DtoTest {
         tournamentDto.setName("A");
         assertTrue(violatedProperties(tournamentDto).contains("name"));
         assertTrue(violatedProperties(tournamentDto).contains("sportId"));
+    }
 
+    @Test
+    void matchDtoValidationRejectsRequiredAndSizeFields() {
         MatchDto matchDto = new MatchDto();
         matchDto.setName(" ");
         matchDto.setLocation(" ");
         Set<String> requiredViolations = violatedProperties(matchDto);
-        assertTrue(requiredViolations.contains("name"));
-        assertTrue(requiredViolations.contains("location"));
-        assertTrue(requiredViolations.contains("date"));
-        assertTrue(requiredViolations.contains("homeTeamId"));
-        assertTrue(requiredViolations.contains("awayTeamId"));
+        assertTrue(requiredViolations.containsAll(Set.of("name", "location", "date", "homeTeamId", "awayTeamId")));
 
         MatchDto longFieldsMatchDto = new MatchDto();
         longFieldsMatchDto.setName("a".repeat(256));
@@ -236,8 +250,31 @@ class DtoTest {
         longFieldsMatchDto.setHomeTeamId(10L);
         longFieldsMatchDto.setAwayTeamId(11L);
         Set<String> sizeViolations = violatedProperties(longFieldsMatchDto);
-        assertTrue(sizeViolations.contains("name"));
-        assertTrue(sizeViolations.contains("location"));
+        assertTrue(sizeViolations.containsAll(Set.of("name", "location")));
+    }
+
+    @Test
+    void tournamentWithMatchesValidationRejectsInvalidValues() {
+        TournamentWithMatchesDto tournamentWithMatchesDto = new TournamentWithMatchesDto();
+        tournamentWithMatchesDto.setTournamentName(" ");
+        tournamentWithMatchesDto.setSportId(null);
+        tournamentWithMatchesDto.setMatches(List.of(new MatchDto()));
+        Set<String> tournamentWithMatchesViolations = violatedProperties(tournamentWithMatchesDto);
+        assertTrue(tournamentWithMatchesViolations.containsAll(Set.of(
+            "tournamentName",
+            "sportId",
+            "matches[0].name",
+            "matches[0].location",
+            "matches[0].date",
+            "matches[0].homeTeamId",
+            "matches[0].awayTeamId"
+        )));
+
+        TournamentWithMatchesDto tournamentWithEmptyMatches = new TournamentWithMatchesDto();
+        tournamentWithEmptyMatches.setTournamentName("Cup");
+        tournamentWithEmptyMatches.setSportId(1L);
+        tournamentWithEmptyMatches.setMatches(List.of());
+        assertTrue(violatedProperties(tournamentWithEmptyMatches).contains("matches"));
     }
 
     private <T> Set<String> violatedProperties(T dto) {
