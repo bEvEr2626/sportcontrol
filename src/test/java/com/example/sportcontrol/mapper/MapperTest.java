@@ -15,6 +15,7 @@ import com.example.sportcontrol.entity.Sport;
 import com.example.sportcontrol.entity.Team;
 import com.example.sportcontrol.entity.Tournament;
 import java.time.LocalDateTime;
+import java.lang.reflect.Method;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
@@ -277,5 +278,26 @@ class MapperTest {
         assertEquals(89L, dtoWithSportWithoutId.getId());
         assertEquals("Sport Without Id", dtoWithSportWithoutId.getName());
         assertNull(dtoWithSportWithoutId.getSportId());
+    }
+
+    @Test
+    void generatedMapperNullGuardHelpersAreCovered() throws Exception {
+        assertNull(invokePrivateNullHelper(new PlayerMapperImpl(), "entityTeamId", Player.class));
+        assertNull(invokePrivateNullHelper(new TournamentMapperImpl(), "entitySportId", Tournament.class));
+
+        MatchMapperImpl matchMapperImpl = new MatchMapperImpl();
+        assertNull(invokePrivateNullHelper(matchMapperImpl, "entityTournamentId", Match.class));
+        assertNull(invokePrivateNullHelper(matchMapperImpl, "entityTournamentName", Match.class));
+        assertNull(invokePrivateNullHelper(matchMapperImpl, "entityHomeTeamId", Match.class));
+        assertNull(invokePrivateNullHelper(matchMapperImpl, "entityHomeTeamName", Match.class));
+        assertNull(invokePrivateNullHelper(matchMapperImpl, "entityAwayTeamId", Match.class));
+        assertNull(invokePrivateNullHelper(matchMapperImpl, "entityAwayTeamName", Match.class));
+    }
+
+    private Object invokePrivateNullHelper(Object target, String methodName, Class<?> parameterType)
+        throws Exception {
+        Method method = target.getClass().getDeclaredMethod(methodName, parameterType);
+        method.setAccessible(true);
+        return method.invoke(target, new Object[] {null});
     }
 }

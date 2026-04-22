@@ -1,6 +1,7 @@
 package com.example.sportcontrol.dto;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import jakarta.validation.Validation;
@@ -130,6 +131,22 @@ class DtoTest {
         assertEquals(completedAt, statusNoArgs.getCompletedAt());
         assertEquals(1, statusNoArgs.getProcessedItems());
         assertEquals("boom", statusNoArgs.getErrorMessage());
+    }
+
+    @Test
+    void asyncTaskAcceptedResponseDtoSupportsEqualityAndToString() {
+        AsyncTaskAcceptedResponseDto left = new AsyncTaskAcceptedResponseDto("task-1");
+        AsyncTaskAcceptedResponseDto right = new AsyncTaskAcceptedResponseDto("task-1");
+        AsyncTaskAcceptedResponseDto different = new AsyncTaskAcceptedResponseDto("task-2");
+        AsyncTaskAcceptedResponseDto empty = new AsyncTaskAcceptedResponseDto();
+
+        assertEquals(left, right);
+        assertEquals(left.hashCode(), right.hashCode());
+        assertNotEquals(left, different);
+        assertNotEquals(left, empty);
+        assertNotEquals(left, null);
+        assertNotEquals(left, "task-1");
+        assertTrue(left.toString().contains("task-1"));
     }
 
     @Test
