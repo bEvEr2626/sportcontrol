@@ -190,4 +190,92 @@ class MapperTest {
         assertNull(sportMapper.toDto(null));
         assertNull(sportMapper.toEntity(null));
     }
+
+    @Test
+    void matchMapperHandlesMissingNestedRelationsAndNestedIds() {
+        Match withoutRelations = new Match();
+        withoutRelations.setId(101L);
+        withoutRelations.setName("No relations");
+        withoutRelations.setLocation("Nowhere");
+        withoutRelations.setDate(LocalDateTime.of(2026, 1, 1, 10, 0));
+
+        MatchDto dtoWithoutRelations = matchMapper.toDto(withoutRelations);
+        assertEquals(101L, dtoWithoutRelations.getId());
+        assertEquals("No relations", dtoWithoutRelations.getName());
+        assertEquals("Nowhere", dtoWithoutRelations.getLocation());
+        assertEquals(withoutRelations.getDate(), dtoWithoutRelations.getDate());
+        assertNull(dtoWithoutRelations.getTournamentId());
+        assertNull(dtoWithoutRelations.getTournamentName());
+        assertNull(dtoWithoutRelations.getHomeTeamId());
+        assertNull(dtoWithoutRelations.getHomeTeamName());
+        assertNull(dtoWithoutRelations.getAwayTeamId());
+        assertNull(dtoWithoutRelations.getAwayTeamName());
+
+        Match withRelationsWithoutFields = new Match();
+        withRelationsWithoutFields.setName("Partial relations");
+        withRelationsWithoutFields.setLocation("Somewhere");
+        withRelationsWithoutFields.setDate(LocalDateTime.of(2026, 1, 2, 11, 0));
+
+        Tournament tournament = new Tournament();
+        Team homeTeam = new Team();
+        Team awayTeam = new Team();
+
+        withRelationsWithoutFields.setTournament(tournament);
+        withRelationsWithoutFields.setHomeTeam(homeTeam);
+        withRelationsWithoutFields.setAwayTeam(awayTeam);
+
+        MatchDto dtoWithNullNestedFields = matchMapper.toDto(withRelationsWithoutFields);
+        assertNull(dtoWithNullNestedFields.getTournamentId());
+        assertNull(dtoWithNullNestedFields.getTournamentName());
+        assertNull(dtoWithNullNestedFields.getHomeTeamId());
+        assertNull(dtoWithNullNestedFields.getHomeTeamName());
+        assertNull(dtoWithNullNestedFields.getAwayTeamId());
+        assertNull(dtoWithNullNestedFields.getAwayTeamName());
+    }
+
+    @Test
+    void playerMapperHandlesMissingTeamAndMissingTeamId() {
+        Player withoutTeam = new Player();
+        withoutTeam.setId(1L);
+        withoutTeam.setName("No Team");
+
+        PlayerDto dtoWithoutTeam = playerMapper.toDto(withoutTeam);
+        assertEquals(1L, dtoWithoutTeam.getId());
+        assertEquals("No Team", dtoWithoutTeam.getName());
+        assertNull(dtoWithoutTeam.getTeamId());
+
+        Team teamWithoutId = new Team();
+        Player withTeamWithoutId = new Player();
+        withTeamWithoutId.setId(2L);
+        withTeamWithoutId.setName("Unknown Team Id");
+        withTeamWithoutId.setTeam(teamWithoutId);
+
+        PlayerDto dtoWithTeamWithoutId = playerMapper.toDto(withTeamWithoutId);
+        assertEquals(2L, dtoWithTeamWithoutId.getId());
+        assertEquals("Unknown Team Id", dtoWithTeamWithoutId.getName());
+        assertNull(dtoWithTeamWithoutId.getTeamId());
+    }
+
+    @Test
+    void tournamentMapperHandlesMissingSportAndMissingSportId() {
+        Tournament withoutSport = new Tournament();
+        withoutSport.setId(88L);
+        withoutSport.setName("No Sport");
+
+        TournamentDto dtoWithoutSport = tournamentMapper.toDto(withoutSport);
+        assertEquals(88L, dtoWithoutSport.getId());
+        assertEquals("No Sport", dtoWithoutSport.getName());
+        assertNull(dtoWithoutSport.getSportId());
+
+        Sport sportWithoutId = new Sport();
+        Tournament withSportWithoutId = new Tournament();
+        withSportWithoutId.setId(89L);
+        withSportWithoutId.setName("Sport Without Id");
+        withSportWithoutId.setSport(sportWithoutId);
+
+        TournamentDto dtoWithSportWithoutId = tournamentMapper.toDto(withSportWithoutId);
+        assertEquals(89L, dtoWithSportWithoutId.getId());
+        assertEquals("Sport Without Id", dtoWithSportWithoutId.getName());
+        assertNull(dtoWithSportWithoutId.getSportId());
+    }
 }
