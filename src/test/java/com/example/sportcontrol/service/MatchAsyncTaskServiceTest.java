@@ -114,6 +114,21 @@ class MatchAsyncTaskServiceTest {
     }
 
     @Test
+    void startBulkCreateTaskUsesSelfCausedExceptionMessageWithoutInfiniteTraversal() {
+        MatchDto match = buildMatchDto(1L);
+        CompletableFuture<List<MatchDto>> taskFuture = new CompletableFuture<>();
+        when(matchAsyncTaskProcessor.processBulkCreateTask(anyList())).thenReturn(taskFuture);
+
+        AsyncTaskAcceptedResponseDto response = service.startBulkCreateTask(List.of(match));
+        taskFuture.completeExceptionally(new SelfCausedRuntimeException("self-cause"));
+
+        AsyncTaskStatusDto status = service.getTaskStatus(response.getTaskId());
+
+        assertEquals("FAILED", status.getStatus());
+        assertEquals("self-cause", status.getErrorMessage());
+    }
+
+    @Test
     void startBulkCreateTaskMarksTaskFailedWhenProcessorThrowsImmediately() {
         MatchDto match = buildMatchDto(1L);
         when(matchAsyncTaskProcessor.processBulkCreateTask(anyList()))
@@ -172,5 +187,17 @@ class MatchAsyncTaskServiceTest {
             4L,
             "Away Team"
         );
+    }
+
+    private static final class SelfCausedRuntimeException extends RuntimeException {
+
+        private SelfCausedRuntimeException(String message) {
+            super(message);
+        }
+
+        @Override
+        public synchronized Throwable getCause() {
+            return this;
+        }
     }
 }

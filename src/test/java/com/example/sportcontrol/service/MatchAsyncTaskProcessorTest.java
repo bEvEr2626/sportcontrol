@@ -2,6 +2,8 @@ package com.example.sportcontrol.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -15,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class MatchAsyncTaskProcessorTest {
@@ -47,6 +50,37 @@ class MatchAsyncTaskProcessorTest {
         CompletionException exception = assertThrows(CompletionException.class, future::join);
         assertEquals("Invalid matches", exception.getCause().getMessage());
         verify(matchService).bulkCreateTransactional(input);
+    }
+
+    @Test
+    void processBulkCreateTaskAppliesDelayWhenConfigured() {
+        List<MatchDto> input = List.of(buildMatchDto(1L));
+        List<MatchDto> created = List.of(buildMatchDto(101L));
+        ReflectionTestUtils.setField(processor, "demoDelayMs", 1L);
+        when(matchService.bulkCreateTransactional(input)).thenReturn(created);
+
+        CompletableFuture<List<MatchDto>> future = processor.processBulkCreateTask(input);
+
+        assertEquals(created, future.join());
+        verify(matchService).bulkCreateTransactional(input);
+    }
+
+    @Test
+    void processBulkCreateTaskReturnsInterruptedFailureWhenSleepIsInterrupted() {
+        List<MatchDto> input = List.of(buildMatchDto(1L));
+        ReflectionTestUtils.setField(processor, "demoDelayMs", 5_000L);
+
+        Thread.currentThread().interrupt();
+        try {
+            CompletableFuture<List<MatchDto>> future = processor.processBulkCreateTask(input);
+
+            CompletionException exception = assertThrows(CompletionException.class, future::join);
+            assertEquals("Async match task interrupted", exception.getCause().getMessage());
+            assertTrue(Thread.currentThread().isInterrupted());
+            verifyNoInteractions(matchService);
+        } finally {
+            Thread.interrupted();
+        }
     }
 
     private MatchDto buildMatchDto(Long id) {
