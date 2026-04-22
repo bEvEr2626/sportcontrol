@@ -11,12 +11,14 @@ import com.example.sportcontrol.dto.AsyncTaskStatusDto;
 import com.example.sportcontrol.dto.MatchDto;
 import com.example.sportcontrol.dto.MatchFilter;
 import com.example.sportcontrol.dto.PlayerDto;
+import com.example.sportcontrol.dto.RaceConditionDemoDto;
 import com.example.sportcontrol.dto.SportDto;
 import com.example.sportcontrol.dto.TeamDto;
 import com.example.sportcontrol.dto.TournamentDto;
 import com.example.sportcontrol.service.MatchAsyncTaskService;
 import com.example.sportcontrol.service.MatchService;
 import com.example.sportcontrol.service.PlayerService;
+import com.example.sportcontrol.service.RaceConditionDemoService;
 import com.example.sportcontrol.service.SportService;
 import com.example.sportcontrol.service.TeamService;
 import com.example.sportcontrol.service.TournamentService;
@@ -47,6 +49,8 @@ class ControllerDelegationTest {
     private MatchService matchService;
     @Mock
     private MatchAsyncTaskService matchAsyncTaskService;
+    @Mock
+    private RaceConditionDemoService raceConditionDemoService;
 
     @InjectMocks
     private SportController sportController;
@@ -58,6 +62,8 @@ class ControllerDelegationTest {
     private PlayerController playerController;
     @InjectMocks
     private MatchController matchController;
+    @InjectMocks
+    private RaceConditionDemoController raceConditionDemoController;
 
     @Test
     void sportControllerDelegatesAllOperations() {
@@ -230,5 +236,16 @@ class ControllerDelegationTest {
         verify(matchAsyncTaskService).startBulkCreateTask(bulk);
         verify(matchAsyncTaskService).getTaskStatus("task-1");
         verify(matchService).delete(15L);
+    }
+
+    @Test
+    void raceConditionDemoControllerDelegatesRunRaceDemo() {
+        RaceConditionDemoDto response = new RaceConditionDemoDto(64, 10000, 640000, 523418, 640000, 640000, true);
+        when(raceConditionDemoService.runDemo(64, 10000)).thenReturn(response);
+
+        ResponseEntity<RaceConditionDemoDto> result = raceConditionDemoController.runRaceDemo(64, 10000);
+
+        assertSame(response, result.getBody());
+        verify(raceConditionDemoService).runDemo(64, 10000);
     }
 }

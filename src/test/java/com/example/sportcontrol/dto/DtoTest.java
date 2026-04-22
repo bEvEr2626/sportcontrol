@@ -185,6 +185,43 @@ class DtoTest {
     }
 
     @Test
+    void matchFilterSupportsConstructorsAndValidation() {
+        LocalDateTime from = LocalDateTime.of(2026, 5, 1, 0, 0);
+        LocalDateTime to = LocalDateTime.of(2026, 5, 31, 23, 59, 59);
+
+        MatchFilter allArgs = new MatchFilter("Final", "Moscow", 2L, "Spartak", "Zenit", from, to);
+        assertEquals("Final", allArgs.getName());
+        assertEquals("Moscow", allArgs.getLocation());
+        assertEquals(2L, allArgs.getTournamentId());
+        assertEquals("Spartak", allArgs.getHomeTeamName());
+        assertEquals("Zenit", allArgs.getAwayTeamName());
+        assertEquals(from, allArgs.getDateFrom());
+        assertEquals(to, allArgs.getDateTo());
+
+        MatchFilter noArgs = new MatchFilter();
+        noArgs.setName("Semifinal");
+        noArgs.setLocation("Saint Petersburg");
+        noArgs.setTournamentId(3L);
+        noArgs.setHomeTeamName("CSKA");
+        noArgs.setAwayTeamName("Dynamo");
+        noArgs.setDateFrom(from);
+        noArgs.setDateTo(to);
+
+        assertEquals("Semifinal", noArgs.getName());
+        assertEquals("Saint Petersburg", noArgs.getLocation());
+        assertEquals(3L, noArgs.getTournamentId());
+        assertEquals("CSKA", noArgs.getHomeTeamName());
+        assertEquals("Dynamo", noArgs.getAwayTeamName());
+        assertEquals(from, noArgs.getDateFrom());
+        assertEquals(to, noArgs.getDateTo());
+
+        MatchFilter invalid = new MatchFilter();
+        invalid.setName("a".repeat(256));
+        invalid.setLocation("b".repeat(256));
+        assertTrue(violatedProperties(invalid).containsAll(Set.of("name", "location")));
+    }
+
+    @Test
     void raceConditionDemoDtoSupportsConstructorsAndAccessors() {
         RaceConditionDemoDto allArgs = new RaceConditionDemoDto(64, 10000, 640000, 523418, 640000, 640000, true);
 
