@@ -28,18 +28,18 @@ public class RaceConditionDemoService {
         CountDownLatch startedLatch = new CountDownLatch(1);
         CountDownLatch completedLatch = new CountDownLatch(threads);
 
-        try (ExecutorService executorService = createExecutorService(threads)) {
+        try (ExecutorService executorService = Executors.newFixedThreadPool(threads)) {
             for (int threadNumber = 0; threadNumber < threads; threadNumber++) {
                 executorService.execute(() -> {
                     try {
-                        if (!shouldRunIncrements(startedLatch)) {
-                            return;
-                        }
+                        startedLatch.await();
                         for (int incrementNumber = 0; incrementNumber < incrementsPerThread; incrementNumber++) {
                             unsafeCounter.increment();
                             synchronizedCounter.increment();
                             atomicCounter.incrementAndGet();
                         }
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
                     } finally {
                         completedLatch.countDown();
                     }
@@ -47,7 +47,15 @@ public class RaceConditionDemoService {
             }
 
             startedLatch.countDown();
-            awaitCompletion(completedLatch, 60, TimeUnit.SECONDS);
+            try {
+                boolean completed = completedLatch.await(60, TimeUnit.SECONDS);
+                if (!completed) {
+                    throw new IllegalStateException("Race condition demo timed out");
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Race condition demo interrupted", ex);
+            }
         }
 
         int expected = threads * incrementsPerThread;
@@ -62,51 +70,15 @@ public class RaceConditionDemoService {
             unsafe,
             synchronizedValue,
             atomic,
-            isRaceConditionDetected(unsafe, synchronizedValue, atomic, expected)
+            unsafe < expected && synchronizedValue == expected && atomic == expected
         );
-    }
-
-    void awaitCompletion(CountDownLatch completedLatch, long timeout, TimeUnit unit) {
-        try {
-            boolean completed = completedLatch.await(timeout, unit);
-            if (!completed) {
-                throw new IllegalStateException("Race condition demo timed out");
-            }
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException("Race condition demo interrupted", ex);
-        }
-    }
-
-    boolean awaitStartSignal(CountDownLatch startedLatch) {
-        try {
-            startedLatch.await();
-            return true;
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-            return false;
-        }
-    }
-
-    boolean shouldRunIncrements(CountDownLatch startedLatch) {
-        return awaitStartSignal(startedLatch);
-    }
-
-    ExecutorService createExecutorService(int threads) {
-        return Executors.newFixedThreadPool(threads);
-    }
-
-    boolean isRaceConditionDetected(int unsafe, int synchronizedValue, int atomic, int expected) {
-        return unsafe < expected && synchronizedValue == expected && atomic == expected;
     }
 
     private static class UnsafeCounter {
         private int value;
 
         void increment() {
-            int next = value + 1;
-            Thread.yield();
-            value = next;
+            value++;
         }
 
         int get() {
