@@ -20,14 +20,14 @@ public class SportService {
     private final SportRepository sportRepository;
     private final SportMapper sportMapper;
 
-    public final List<SportDto> getAllSports() {
+    public List<SportDto> getAllSports() {
         LOG.info("Getting all sports");
         return sportRepository.findAll().stream()
                 .map(sportMapper::toDto)
                 .toList();
     }
 
-    public final SportDto getById(Long id) {
+    public SportDto getById(Long id) {
         LOG.debug("getById called with id={}", id);
         return sportMapper.toDto(findSportById(id));
     }
