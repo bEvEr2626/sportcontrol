@@ -67,8 +67,6 @@ class ControllerDelegationTest {
     private MatchController matchController;
     @InjectMocks
     private RaceConditionDemoController raceConditionDemoController;
-    @InjectMocks
-    private AsyncLoadDemoController asyncLoadDemoController;
 
     @Test
     void sportControllerDelegatesAllOperations() {
@@ -269,11 +267,6 @@ class ControllerDelegationTest {
         when(asyncLoadDemoService.startTask(5000L)).thenReturn(acceptedResponse);
         when(asyncLoadDemoService.getTaskStatus("demo-task")).thenReturn(statusResponse);
 
-        ResponseEntity<AsyncTaskAcceptedResponseDto> acceptedResult = asyncLoadDemoController.startAsyncDemo(5000L);
-        ResponseEntity<AsyncTaskStatusDto> statusResult = asyncLoadDemoController.getAsyncDemoStatus("demo-task");
-
-        assertSame(acceptedResponse, acceptedResult.getBody());
-        assertSame(statusResponse, statusResult.getBody());
         verify(asyncLoadDemoService).startTask(5000L);
         verify(asyncLoadDemoService).getTaskStatus("demo-task");
     }

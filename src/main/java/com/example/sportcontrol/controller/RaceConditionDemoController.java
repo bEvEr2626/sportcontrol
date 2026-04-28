@@ -14,7 +14,7 @@ import com.example.sportcontrol.dto.RaceConditionDemoDto;
 import com.example.sportcontrol.service.RaceConditionDemoService;
 
 @RestController
-@RequestMapping("/concurrency")
+@RequestMapping("/race-condition")
 @Tag(name = "Concurrency", description = "Race condition and synchronization demo")
 public class RaceConditionDemoController {
 

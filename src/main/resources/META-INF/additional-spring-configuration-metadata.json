@@ -5,6 +5,24 @@
       "type": "java.lang.Long",
       "defaultValue": 0,
       "description": "Demonstration delay in milliseconds before processing async bulk match task."
+    },
+    {
+      "name": "app.async.match.core-pool-size",
+      "type": "java.lang.Integer",
+      "defaultValue": 4,
+      "description": "Core thread pool size for match async tasks."
+    },
+    {
+      "name": "app.async.match.max-pool-size",
+      "type": "java.lang.Integer",
+      "defaultValue": 4,
+      "description": "Maximum thread pool size for match async tasks."
+    },
+    {
+      "name": "app.async.match.queue-capacity",
+      "type": "java.lang.Integer",
+      "defaultValue": 20,
+      "description": "Queue capacity for match async tasks before rejecting new work."
     }
   ]
 }
