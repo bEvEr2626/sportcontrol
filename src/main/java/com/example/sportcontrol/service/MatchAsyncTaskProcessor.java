@@ -17,7 +17,7 @@ public class MatchAsyncTaskProcessor {
     @Value("${app.async.match-demo-delay-ms:0}")
     private long demoDelayMs;
 
-    @Async
+    @Async("matchTaskExecutor")
     public CompletableFuture<List<MatchDto>> processBulkCreateTask(List<MatchDto> matches) {
         try {
             applyDemoDelayIfConfigured();

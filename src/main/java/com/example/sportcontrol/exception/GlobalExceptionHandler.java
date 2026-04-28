@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.task.TaskRejectedException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.RejectedExecutionException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -45,6 +47,16 @@ public class GlobalExceptionHandler {
     ) {
         LOG.warn("Illegal argument on path={} message={}", request.getRequestURI(), ex.getMessage());
         return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request, null);
+    }
+
+    @ExceptionHandler({TaskRejectedException.class, RejectedExecutionException.class})
+    public ResponseEntity<ErrorResponseDto> handleTaskRejected(
+        RuntimeException ex,
+        HttpServletRequest request
+    ) {
+        String message = "Async queue is full. Try again later.";
+        LOG.warn("Async task rejected on path={} message={}", request.getRequestURI(), ex.getMessage());
+        return buildErrorResponse(HttpStatus.SERVICE_UNAVAILABLE, message, request, null);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)

@@ -2,56 +2,52 @@ package com.example.sportcontrol.service;
 
 import com.example.sportcontrol.dto.AsyncTaskAcceptedResponseDto;
 import com.example.sportcontrol.dto.AsyncTaskStatusDto;
-import com.example.sportcontrol.dto.MatchDto;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.RejectedExecutionException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import java.util.concurrent.RejectedExecutionException;
 
 @Service
 @RequiredArgsConstructor
-public class MatchAsyncTaskService {
+public class AsyncLoadDemoService {
 
     private static final String STATUS_PENDING = "PENDING";
     private static final String STATUS_RUNNING = "RUNNING";
     private static final String STATUS_COMPLETED = "COMPLETED";
     private static final String STATUS_FAILED = "FAILED";
 
-    private final MatchAsyncTaskProcessor matchAsyncTaskProcessor;
+    private final AsyncLoadDemoProcessor asyncLoadDemoProcessor;
 
     private final Map<String, TaskState> tasks = new ConcurrentHashMap<>();
 
-    public AsyncTaskAcceptedResponseDto startBulkCreateTask(List<MatchDto> matches) {
-        List<MatchDto> safeMatches = Optional.ofNullable(matches)
-            .filter(list -> !list.isEmpty())
-            .orElseThrow(() -> new IllegalArgumentException("Matches list cannot be empty"));
+    public AsyncTaskAcceptedResponseDto startTask(long durationMs) {
+        if (durationMs <= 0) {
+            throw new IllegalArgumentException("durationMs must be > 0");
+        }
 
         String taskId = UUID.randomUUID().toString();
         TaskState taskState = new TaskState();
         tasks.put(taskId, taskState);
 
         try {
-            CompletableFuture<List<MatchDto>> taskFuture = matchAsyncTaskProcessor.processBulkCreateTask(List.copyOf(safeMatches));
+            CompletableFuture<Void> taskFuture = asyncLoadDemoProcessor.runTask(durationMs);
             taskState.markRunning();
             taskFuture.whenComplete((result, error) -> {
                 if (error != null) {
                     taskState.markFailed(extractErrorMessage(error));
                     return;
                 }
-                taskState.markCompleted(result.size());
+                taskState.markCompleted(1);
             });
         } catch (RejectedExecutionException ex) {
             tasks.remove(taskId);
             throw ex;
-        } catch (Exception ex) {
-            taskState.markFailed(extractErrorMessage(ex));
         }
 
         return new AsyncTaskAcceptedResponseDto(taskId);

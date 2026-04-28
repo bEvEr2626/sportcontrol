@@ -10,6 +10,7 @@ application-*.properties
 application-*.yml
 .env
 logs/
+jmeter/
 
 ### STS ###
 .apt_generated

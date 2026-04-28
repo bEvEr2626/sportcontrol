@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.RejectedExecutionException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -139,6 +140,21 @@ class MatchAsyncTaskServiceTest {
 
         assertEquals("FAILED", status.getStatus());
         assertEquals("Executor unavailable", status.getErrorMessage());
+    }
+
+    @Test
+    void startBulkCreateTaskRethrowsWhenExecutorRejectsTask() {
+        MatchDto match = buildMatchDto(1L);
+        List<MatchDto> matches = List.of(match);
+        when(matchAsyncTaskProcessor.processBulkCreateTask(anyList()))
+            .thenThrow(new RejectedExecutionException("queue full"));
+
+        RejectedExecutionException exception = assertThrows(
+            RejectedExecutionException.class,
+            () -> service.startBulkCreateTask(matches)
+        );
+
+        assertEquals("queue full", exception.getMessage());
     }
 
     @Test

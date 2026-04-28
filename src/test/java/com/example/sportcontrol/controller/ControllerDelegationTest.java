@@ -18,6 +18,7 @@ import com.example.sportcontrol.dto.TournamentDto;
 import com.example.sportcontrol.service.MatchAsyncTaskService;
 import com.example.sportcontrol.service.MatchService;
 import com.example.sportcontrol.service.PlayerService;
+import com.example.sportcontrol.service.AsyncLoadDemoService;
 import com.example.sportcontrol.service.RaceConditionDemoService;
 import com.example.sportcontrol.service.SportService;
 import com.example.sportcontrol.service.TeamService;
@@ -51,6 +52,8 @@ class ControllerDelegationTest {
     private MatchAsyncTaskService matchAsyncTaskService;
     @Mock
     private RaceConditionDemoService raceConditionDemoService;
+    @Mock
+    private AsyncLoadDemoService asyncLoadDemoService;
 
     @InjectMocks
     private SportController sportController;
@@ -64,6 +67,8 @@ class ControllerDelegationTest {
     private MatchController matchController;
     @InjectMocks
     private RaceConditionDemoController raceConditionDemoController;
+    @InjectMocks
+    private AsyncLoadDemoController asyncLoadDemoController;
 
     @Test
     void sportControllerDelegatesAllOperations() {
@@ -247,5 +252,29 @@ class ControllerDelegationTest {
 
         assertSame(response, result.getBody());
         verify(raceConditionDemoService).runDemo(64, 10000);
+    }
+
+    @Test
+    void asyncLoadDemoControllerDelegatesAsyncOperations() {
+        AsyncTaskAcceptedResponseDto acceptedResponse = new AsyncTaskAcceptedResponseDto("demo-task");
+        AsyncTaskStatusDto statusResponse = new AsyncTaskStatusDto(
+            "demo-task",
+            "RUNNING",
+            LocalDateTime.now(),
+            LocalDateTime.now(),
+            null,
+            null,
+            null
+        );
+        when(asyncLoadDemoService.startTask(5000L)).thenReturn(acceptedResponse);
+        when(asyncLoadDemoService.getTaskStatus("demo-task")).thenReturn(statusResponse);
+
+        ResponseEntity<AsyncTaskAcceptedResponseDto> acceptedResult = asyncLoadDemoController.startAsyncDemo(5000L);
+        ResponseEntity<AsyncTaskStatusDto> statusResult = asyncLoadDemoController.getAsyncDemoStatus("demo-task");
+
+        assertSame(acceptedResponse, acceptedResult.getBody());
+        assertSame(statusResponse, statusResult.getBody());
+        verify(asyncLoadDemoService).startTask(5000L);
+        verify(asyncLoadDemoService).getTaskStatus("demo-task");
     }
 }

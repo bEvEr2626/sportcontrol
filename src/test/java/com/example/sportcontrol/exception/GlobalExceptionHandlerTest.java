@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.concurrent.RejectedExecutionException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,6 +63,14 @@ class GlobalExceptionHandlerTest {
             handler.handleIllegalArgument(new IllegalArgumentException("Bad argument"), request);
 
         assertBaseResponse(response, HttpStatus.BAD_REQUEST, "Bad argument");
+    }
+
+    @Test
+    void handleTaskRejectedReturnsServiceUnavailable() {
+        ResponseEntity<ErrorResponseDto> response =
+            handler.handleTaskRejected(new RejectedExecutionException("queue full"), request);
+
+        assertBaseResponse(response, HttpStatus.SERVICE_UNAVAILABLE, "Async queue is full. Try again later.");
     }
 
     @Test

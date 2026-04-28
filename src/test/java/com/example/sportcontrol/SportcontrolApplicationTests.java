@@ -1,12 +1,11 @@
 package com.example.sportcontrol;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.mockStatic;
 
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.SpringApplication;
 import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest(properties = {
@@ -29,12 +28,26 @@ class SportcontrolApplicationTests {
     @Test
     void mainDelegatesToSpringApplicationRun() {
         String[] args = {"--spring.main.web-application-type=none"};
-
-        try (MockedStatic<SpringApplication> springApplication = mockStatic(SpringApplication.class)) {
+        SportcontrolApplication.ApplicationRunner originalRunner = SportcontrolApplication.applicationRunner;
+        CapturingRunner runner = new CapturingRunner();
+        SportcontrolApplication.applicationRunner = runner;
+        try {
             SportcontrolApplication.main(args);
-
-            springApplication.verify(() -> SpringApplication.run(SportcontrolApplication.class, args));
+            assertEquals(SportcontrolApplication.class, runner.applicationClass);
+            assertArrayEquals(args, runner.args);
+        } finally {
+            SportcontrolApplication.applicationRunner = originalRunner;
         }
     }
 
+    private static final class CapturingRunner implements SportcontrolApplication.ApplicationRunner {
+        private Class<?> applicationClass;
+        private String[] args;
+
+        @Override
+        public void run(Class<?> applicationClass, String... args) {
+            this.applicationClass = applicationClass;
+            this.args = args;
+        }
+    }
 }

@@ -8,10 +8,17 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableAsync
 public class SportcontrolApplication {
 
+    @FunctionalInterface
+    interface ApplicationRunner {
+        void run(Class<?> applicationClass, String... args);
+    }
+
+    static ApplicationRunner applicationRunner = SpringApplication::run;
+
     protected SportcontrolApplication() {
     }
 
     public static void main(final String[] args) {
-        SpringApplication.run(SportcontrolApplication.class, args);
+        applicationRunner.run(SportcontrolApplication.class, args);
     }
 }
