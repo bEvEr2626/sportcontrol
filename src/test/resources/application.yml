@@ -1,20 +1,11 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
 
-spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-spring.datasource.driver-class-name=org.h2.Driver
-spring.datasource.username=sa
-spring.datasource.password=
-
-spring.jpa.hibernate.ddl-auto=create-drop
-spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
-spring.jpa.show-sql=false
-spring.jpa.properties.hibernate.format_sql=false
-
-spring.jpa.properties.hibernate.cache.use_second_level_cache=false
-spring.jpa.properties.hibernate.cache.use_query_cache=false
-spring.cache.type=none
-
-spring.main.lazy-initialization=true
-spring.devtools.restart.enabled=false
-
-logging.level.org.hibernate=ERROR
-logging.level.org.springframework=WARN
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
