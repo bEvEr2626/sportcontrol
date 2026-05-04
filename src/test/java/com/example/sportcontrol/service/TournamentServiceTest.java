@@ -9,9 +9,11 @@ import static org.mockito.Mockito.when;
 
 import com.example.sportcontrol.dto.TournamentDto;
 import com.example.sportcontrol.entity.Sport;
+import com.example.sportcontrol.entity.Team;
 import com.example.sportcontrol.entity.Tournament;
 import com.example.sportcontrol.mapper.TournamentMapper;
 import com.example.sportcontrol.repository.SportRepository;
+import com.example.sportcontrol.repository.TeamRepository;
 import com.example.sportcontrol.repository.TournamentRepository;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -30,6 +32,9 @@ class TournamentServiceTest {
 
     @Mock
     private SportRepository sportRepository;
+
+    @Mock
+    private TeamRepository teamRepository;
 
     @Mock
     private TournamentMapper tournamentMapper;
@@ -153,6 +158,47 @@ class TournamentServiceTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.update(1L, null));
 
         assertEquals("Tournament payload cannot be null", exception.getMessage());
+    }
+
+    @Test
+    void addTeamsAddsTeamsToTournament() {
+        Tournament tournament = new Tournament();
+        tournament.setId(1L);
+        Team existing = new Team();
+        existing.setId(10L);
+        tournament.getTeams().add(existing);
+
+        Team newTeam = new Team();
+        newTeam.setId(11L);
+        List<Long> teamIds = List.of(10L, 11L);
+        TournamentDto dto = buildTournamentDto(1L, "Cup", 5L);
+
+        when(tournamentRepository.findById(1L)).thenReturn(Optional.of(tournament));
+        when(teamRepository.findAllById(teamIds)).thenReturn(List.of(existing, newTeam));
+        when(tournamentRepository.save(tournament)).thenReturn(tournament);
+        when(tournamentMapper.toDto(tournament)).thenReturn(dto);
+
+        TournamentDto result = service.addTeams(1L, teamIds);
+
+        assertEquals(dto, result);
+        assertEquals(List.of(existing, newTeam), tournament.getTeams());
+        assertEquals(List.of(tournament), newTeam.getTournaments());
+    }
+
+    @Test
+    void addTeamsThrowsWhenTeamMissing() {
+        Tournament tournament = new Tournament();
+        Team existing = new Team();
+        existing.setId(10L);
+        List<Long> teamIds = List.of(10L, 11L);
+
+        when(tournamentRepository.findById(1L)).thenReturn(Optional.of(tournament));
+        when(teamRepository.findAllById(teamIds)).thenReturn(List.of(existing));
+
+        NoSuchElementException exception = assertThrows(NoSuchElementException.class, () -> service.addTeams(1L, teamIds));
+
+        assertEquals("Teams not found: [11]", exception.getMessage());
+        verify(tournamentRepository, never()).save(any(Tournament.class));
     }
 
     @Test

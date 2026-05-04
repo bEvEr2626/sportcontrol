@@ -15,6 +15,7 @@ import com.example.sportcontrol.dto.RaceConditionDemoDto;
 import com.example.sportcontrol.dto.SportDto;
 import com.example.sportcontrol.dto.TeamDto;
 import com.example.sportcontrol.dto.TournamentDto;
+import com.example.sportcontrol.dto.TournamentTeamsDto;
 import com.example.sportcontrol.service.MatchAsyncTaskService;
 import com.example.sportcontrol.service.MatchService;
 import com.example.sportcontrol.service.PlayerService;
@@ -126,17 +127,21 @@ class ControllerDelegationTest {
         dto.setId(5L);
         dto.setName("Cup");
         dto.setSportId(1L);
+        TournamentTeamsDto teamsDto = new TournamentTeamsDto();
+        teamsDto.setTeamIds(List.of(10L, 11L));
 
         when(tournamentService.getAllTournaments()).thenReturn(List.of(dto));
         when(tournamentService.create(dto)).thenReturn(dto);
         when(tournamentService.getById(5L)).thenReturn(dto);
         when(tournamentService.update(5L, dto)).thenReturn(dto);
+        when(tournamentService.addTeams(5L, teamsDto.getTeamIds())).thenReturn(dto);
 
         assertEquals(1, tournamentController.getAll().size());
         assertSame(dto, tournamentController.create(dto));
         assertSame(dto, tournamentController.getById(5L));
         assertSame(dto, tournamentController.update(5L, dto));
         assertSame(dto, tournamentController.patch(5L, dto));
+        assertSame(dto, tournamentController.addTeams(5L, teamsDto));
 
         tournamentController.delete(5L);
 
@@ -144,6 +149,7 @@ class ControllerDelegationTest {
         verify(tournamentService).create(dto);
         verify(tournamentService).getById(5L);
         verify(tournamentService, times(2)).update(5L, dto);
+        verify(tournamentService).addTeams(5L, teamsDto.getTeamIds());
         verify(tournamentService).delete(5L);
     }
 

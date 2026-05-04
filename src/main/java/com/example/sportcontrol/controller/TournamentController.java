@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import lombok.RequiredArgsConstructor;
 import com.example.sportcontrol.dto.TournamentDto;
+import com.example.sportcontrol.dto.TournamentTeamsDto;
 import jakarta.validation.Valid;
 import com.example.sportcontrol.service.TournamentService;
 import java.util.List;
@@ -56,6 +57,12 @@ public class TournamentController {
     @Operation(summary = "Update tournament", description = "Fully updates an existing tournament by ID")
     public TournamentDto update(@PathVariable Long id, @RequestBody @Valid TournamentDto dto) {
         return tournamentService.update(id, dto);
+    }
+
+    @PostMapping("/{id}/teams")
+    @Operation(summary = "Add teams to tournament", description = "Adds teams to a tournament by ID")
+    public TournamentDto addTeams(@PathVariable Long id, @RequestBody @Valid TournamentTeamsDto dto) {
+        return tournamentService.addTeams(id, dto.getTeamIds());
     }
 
     @DeleteMapping("/{id}")

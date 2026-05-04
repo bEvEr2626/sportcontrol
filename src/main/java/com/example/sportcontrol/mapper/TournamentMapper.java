@@ -9,6 +9,10 @@ import org.mapstruct.Mapping;
 public interface TournamentMapper {
 
     @Mapping(source = "sport.id", target = "sportId")
+    @Mapping(
+        target = "teamIds",
+        expression = "java(entity.getTeams().stream().map(team -> team.getId()).collect(java.util.stream.Collectors.toList()))"
+    )
     TournamentDto toDto(Tournament entity);
 
     @Mapping(target = "id", ignore = true)

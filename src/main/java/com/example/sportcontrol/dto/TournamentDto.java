@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.util.List;
 import lombok.Data;
 
 @Data
@@ -21,4 +22,8 @@ public class TournamentDto {
     @NotNull
     @Schema(description = "Sport ID", example = "2")
     private Long sportId;
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @Schema(description = "Teams linked to the tournament", example = "[1,2,3]", accessMode = Schema.AccessMode.READ_ONLY)
+    private List<Long> teamIds;
 }
