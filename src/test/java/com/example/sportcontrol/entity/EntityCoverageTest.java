@@ -33,9 +33,9 @@ class EntityCoverageTest {
         assertSame(tournaments, sport.getTournaments());
         assertEquals(sport, same);
         assertEquals(sport.hashCode(), same.hashCode());
-        assertNotEquals(sport, different);
-        assertNotEquals(sport, null);
-        assertNotEquals(sport, "sport");
+        assertNotEquals(different, sport);
+        assertNotEquals(null, sport);
+        assertNotEquals("sport", sport);
         assertNotNull(sport.toString());
     }
 
@@ -67,9 +67,9 @@ class EntityCoverageTest {
         assertSame(awayMatches, team.getAwayMatches());
         assertEquals(team, same);
         assertEquals(team.hashCode(), same.hashCode());
-        assertNotEquals(team, different);
-        assertNotEquals(team, null);
-        assertNotEquals(team, "team");
+        assertNotEquals(different, team);
+        assertNotEquals(null, team);
+        assertNotEquals("team", team);
         assertNotNull(team.toString());
     }
 
@@ -98,9 +98,9 @@ class EntityCoverageTest {
         assertSame(teams, tournament.getTeams());
         assertEquals(tournament, same);
         assertEquals(tournament.hashCode(), same.hashCode());
-        assertNotEquals(tournament, different);
-        assertNotEquals(tournament, null);
-        assertNotEquals(tournament, "tournament");
+        assertNotEquals(different, tournament);
+        assertNotEquals(null, tournament);
+        assertNotEquals("tournament", tournament);
         assertNotNull(tournament.toString());
     }
 
@@ -133,9 +133,9 @@ class EntityCoverageTest {
         assertSame(awayTeam, match.getAwayTeam());
         assertEquals(match, same);
         assertEquals(match.hashCode(), same.hashCode());
-        assertNotEquals(match, different);
-        assertNotEquals(match, null);
-        assertNotEquals(match, "match");
+        assertNotEquals(different, match);
+        assertNotEquals(null, match);
+        assertNotEquals("match", match);
         assertNotNull(match.toString());
     }
 }

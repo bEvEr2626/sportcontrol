@@ -142,10 +142,10 @@ class DtoTest {
 
         assertEquals(left, right);
         assertEquals(left.hashCode(), right.hashCode());
-        assertNotEquals(left, different);
-        assertNotEquals(left, empty);
-        assertNotEquals(left, null);
-        assertNotEquals(left, "task-1");
+        assertNotEquals(different, left);
+        assertNotEquals(empty, left);
+        assertNotEquals(null, left);
+        assertNotEquals("task-1", left);
         assertTrue(left.toString().contains("task-1"));
     }
 
