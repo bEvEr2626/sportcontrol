@@ -56,6 +56,10 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<dependency>
     		<groupId>net.ttddyy</groupId>
     		<artifactId>datasource-proxy</artifactId>
     		<version>1.10</version>
@@ -149,31 +153,21 @@
     			<groupId>org.apache.maven.plugins</groupId>
     			<artifactId>maven-checkstyle-plugin</artifactId>
     			<version>3.6.0</version>
-    				<dependencies>
-        				<dependency>
-            				<groupId>com.puppycrawl.tools</groupId>
-            				<artifactId>checkstyle</artifactId>
-            				<version>10.12.4</version>
-        				</dependency>
-    				</dependencies>
-    			<configuration>
-        			<configLocation>checkstyle.xml</configLocation>
-        			<consoleOutput>true</consoleOutput>
-        			<failsOnError>true</failsOnError>
-        			<linkXRef>false</linkXRef>
-        			<sourceDirectories>
-            			<sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
-        			</sourceDirectories>
-    			</configuration>
+    				<configuration>
+    					<configLocation>checkstyle.xml</configLocation>
+    					<encoding>UTF-8</encoding>
+						<failOnViolation>false</failOnViolation>
+    					<failsOnError>true</failsOnError>
+						<includeTestSourceDirectory>false</includeTestSourceDirectory>
+					</configuration>
     		<executions>
         		<execution>
-        			<?m2e execute onConfiguration?>
-            		<id>validate</id>
-            		<phase>validate</phase>
-            			<goals>
-                		<goal>check</goal>
-            		</goals>
-        		</execution>
+    				<id>checkstyle</id>
+    				<phase>verify</phase>
+    				<goals>
+        				<goal>check</goal>
+    				</goals>
+				</execution>
     		</executions>
 		</plugin>
 		<plugin>

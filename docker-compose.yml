@@ -1,33 +1,44 @@
 services:
   db:
     image: postgres:16-alpine
+    container_name: sport-db
     environment:
       POSTGRES_DB: ${DB_NAME:-sport_db}
       POSTGRES_USER: ${DB_USER:-sport_user}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-7276}
     ports:
       - "${DB_PORT:-5432}:5432"
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 10
 
   app:
     build:
       context: .
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME:-sport_db}
-      SPRING_DATASOURCE_USERNAME: ${DB_USER:-sport_user}
-      DB_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "${APP_PORT:-8080}:8080"
+      dockerfile: Dockerfile
+    container_name: sport-app
     depends_on:
       db:
         condition: service_healthy
-    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME:-sport_db}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-sport_user}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-7276}
+      PORT: 8080
+      DEMO_DELAY_MS: ${DEMO_DELAY_MS:-15000}
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
 volumes:
-  db-data:
+  postgres_data:

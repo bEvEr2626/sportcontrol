@@ -20,4 +20,4 @@ EXPOSE 8080
 ENV JAVA_OPTS=""
 USER appuser
 
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar --server.port=$PORT"]
