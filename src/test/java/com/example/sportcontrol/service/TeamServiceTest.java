@@ -10,6 +10,7 @@ import com.example.sportcontrol.dto.TeamDto;
 import com.example.sportcontrol.entity.Team;
 import com.example.sportcontrol.entity.Tournament;
 import com.example.sportcontrol.mapper.TeamMapper;
+import com.example.sportcontrol.repository.MatchRepository;
 import com.example.sportcontrol.repository.TeamRepository;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -25,6 +26,9 @@ class TeamServiceTest {
 
     @Mock
     private TeamRepository teamRepository;
+
+    @Mock
+    private MatchRepository matchRepository;
 
     @Mock
     private TeamMapper teamMapper;
@@ -138,6 +142,7 @@ class TeamServiceTest {
         assertEquals(0, team.getTournaments().size());
         assertEquals(0, first.getTeams().size());
         assertEquals(0, second.getTeams().size());
+        verify(matchRepository).deleteByHomeTeam_IdOrAwayTeam_Id(6L, 6L);
         verify(teamRepository).delete(team);
     }
 

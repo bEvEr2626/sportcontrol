@@ -9,6 +9,7 @@ import com.example.sportcontrol.entity.Team;
 import com.example.sportcontrol.entity.Tournament;
 import java.util.NoSuchElementException;
 import com.example.sportcontrol.mapper.TeamMapper;
+import com.example.sportcontrol.repository.MatchRepository;
 import com.example.sportcontrol.repository.TeamRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -21,6 +22,7 @@ public class TeamService {
 
     private static final Logger LOG = LoggerFactory.getLogger(TeamService.class);
     private final TeamRepository teamRepository;
+    private final MatchRepository matchRepository;
     private final TeamMapper teamMapper;
 
     public List<TeamDto> getAll() {
@@ -61,6 +63,8 @@ public class TeamService {
         LOG.info("Deleting team with id={}", id);
         Team team = findTeamById(id);
         detachFromTournaments(team);
+        long deletedMatches = matchRepository.deleteByHomeTeam_IdOrAwayTeam_Id(id, id);
+        LOG.info("Deleted {} matches for team id={}", deletedMatches, id);
         teamRepository.delete(team);
         LOG.info("Team deleted: {}", id);
     }

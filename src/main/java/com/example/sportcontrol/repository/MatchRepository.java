@@ -79,4 +79,6 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
         @Param("filter") MatchFilter filter,
         Pageable pageable
 );
+
+    long deleteByHomeTeam_IdOrAwayTeam_Id(Long homeTeamId, Long awayTeamId);
 }
