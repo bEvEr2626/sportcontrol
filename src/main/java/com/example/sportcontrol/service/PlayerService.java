@@ -70,9 +70,11 @@ public class PlayerService {
                     return new NoSuchElementException("Player " + id + NOTFOUND);
                 });
         existing.setName(dto.getName());
-        Optional.ofNullable(dto.getTeamId())
-            .map(this::findTeamById)
-            .ifPresent(existing::setTeam);
+        if (dto.getTeamId() != null) {
+            existing.setTeam(findTeamById(dto.getTeamId()));
+        } else {
+            existing.setTeam(null);
+        }
         Player saved = playerRepository.save(existing);
         LOG.info("Player updated with id={}", saved.getId());
         return playerMapper.toDto(saved);
