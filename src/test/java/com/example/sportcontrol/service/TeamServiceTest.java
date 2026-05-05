@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.example.sportcontrol.dto.TeamDto;
 import com.example.sportcontrol.entity.Team;
+import com.example.sportcontrol.entity.Tournament;
 import com.example.sportcontrol.mapper.TeamMapper;
 import com.example.sportcontrol.repository.TeamRepository;
 import java.util.List;
@@ -120,10 +121,24 @@ class TeamServiceTest {
     }
 
     @Test
-    void deleteCallsRepositoryDeleteById() {
+    void deleteDetachesFromTournamentsAndDeletesTeam() {
+        Team team = new Team();
+        team.setId(6L);
+        Tournament first = new Tournament();
+        Tournament second = new Tournament();
+
+        first.getTeams().add(team);
+        second.getTeams().add(team);
+        team.getTournaments().addAll(List.of(first, second));
+
+        when(teamRepository.findById(6L)).thenReturn(Optional.of(team));
+
         service.delete(6L);
 
-        verify(teamRepository).deleteById(6L);
+        assertEquals(0, team.getTournaments().size());
+        assertEquals(0, first.getTeams().size());
+        assertEquals(0, second.getTeams().size());
+        verify(teamRepository).delete(team);
     }
 
     private TeamDto buildTeamDto(Long id, String name) {

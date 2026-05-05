@@ -1,16 +1,19 @@
 package com.example.sportcontrol.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import com.example.sportcontrol.dto.TeamDto;
 import com.example.sportcontrol.entity.Team;
+import com.example.sportcontrol.entity.Tournament;
 import java.util.NoSuchElementException;
 import com.example.sportcontrol.mapper.TeamMapper;
 import com.example.sportcontrol.repository.TeamRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -53,10 +56,21 @@ public class TeamService {
         return teamMapper.toDto(saved);
     }
 
+    @Transactional
     public void delete(Long id) {
         LOG.info("Deleting team with id={}", id);
-        teamRepository.deleteById(id);
+        Team team = findTeamById(id);
+        detachFromTournaments(team);
+        teamRepository.delete(team);
         LOG.info("Team deleted: {}", id);
+    }
+
+    private void detachFromTournaments(Team team) {
+        List<Tournament> tournaments = new ArrayList<>(team.getTournaments());
+        for (Tournament tournament : tournaments) {
+            tournament.getTeams().remove(team);
+        }
+        team.getTournaments().clear();
     }
 
     private Team findTeamById(Long id) {
