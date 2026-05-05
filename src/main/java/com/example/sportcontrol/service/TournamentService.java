@@ -139,4 +139,21 @@ public class TournamentService {
                 return new NoSuchElementException("Sport not found: " + sportId);
             });
     }
+
+    @Transactional
+    public void removeTeams(Long tournamentId, List<Long> teamIds) {
+    Tournament tournament = findTournamentById(tournamentId);
+    List<Team> teamsToRemove = teamRepository.findAllById(teamIds);
+    if (teamsToRemove.size() != teamIds.size()) {
+        Set<Long> found = teamsToRemove.stream().map(Team::getId).collect(Collectors.toSet());
+        List<Long> missing = teamIds.stream().filter(id -> !found.contains(id)).toList();
+        throw new NoSuchElementException("Teams not found: " + missing);
+    }
+    teamsToRemove.forEach(team -> {
+        tournament.getTeams().remove(team);
+        team.getTournaments().remove(tournament);
+    });
+    tournamentRepository.save(tournament);
+    LOG.info("Removed {} teams from tournament {}", teamsToRemove.size(), tournamentId);
+}
 }

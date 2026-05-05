@@ -70,4 +70,10 @@ public class TournamentController {
     public void delete(@PathVariable Long id) {
         tournamentService.delete(id);
     }
+
+    @DeleteMapping("/{id}/teams")
+    @Operation(summary = "Remove teams from tournament", description = "Removes specified teams from the tournament")
+    public void removeTeams(@PathVariable Long id, @RequestBody @Valid TournamentTeamsDto dto) {
+        tournamentService.removeTeams(id, dto.getTeamIds());
+}
 }
