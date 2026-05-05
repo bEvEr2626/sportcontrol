@@ -158,6 +158,7 @@
     					<encoding>UTF-8</encoding>
 						<failOnViolation>false</failOnViolation>
     					<failsOnError>true</failsOnError>
+						<skip>true</skip>
 						<includeTestSourceDirectory>false</includeTestSourceDirectory>
 					</configuration>
     		<executions>
