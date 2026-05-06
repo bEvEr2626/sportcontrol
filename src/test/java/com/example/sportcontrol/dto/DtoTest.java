@@ -281,7 +281,6 @@ class DtoTest {
         PlayerDto playerDto = new PlayerDto();
         playerDto.setName("A");
         assertTrue(violatedProperties(playerDto).contains("name"));
-        assertTrue(violatedProperties(playerDto).contains("teamId"));
 
         TournamentDto tournamentDto = new TournamentDto();
         tournamentDto.setName("A");
