@@ -17,7 +17,6 @@ public class PlayerDto {
     @Schema(description = "Player name", example = "John Smith")
     private String name;
 
-    @NotNull
     @Schema(description = "Team ID", example = "10")
     private Long teamId;
 }
